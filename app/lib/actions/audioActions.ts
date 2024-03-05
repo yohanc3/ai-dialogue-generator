@@ -3,7 +3,7 @@
 
 export async function textToAudio(text: string){
 
-  const apiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/F8kxYDRynqXVeUriIsL2/stream?output_format=mp3_22050_32';
+  const apiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/UymZwoAxnEVxnbvKNcsY/stream?output_format=mp3_22050_32';
   const options = {
     method: 'POST',
     headers: {

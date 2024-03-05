@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 interface Job {
   url: string,
   id: string,
-  localid: string,
+  jobid: string,
   userId: string,
   status: string
 }
@@ -51,7 +51,7 @@ export default function Dashboard({jobs}: {jobs: Job[]}){
   useEffect(() => {
     setPollingIds((cur) => {
       return cur.filter((id) => {
-        return jobs.find(job => job.localid === id)?.status === 'PENDING';
+        return jobs.find(job => job.jobid === id)?.status === 'PENDING';
       })
     })
     console.log("NEW POLLING IDS: ", pollingIds);

@@ -6,7 +6,7 @@ import { Suspense } from "react";
 interface Job {
   url: string,
   id: string,
-  localid: string,
+  jobid: string,
   userId: string,
   status: string
 }
