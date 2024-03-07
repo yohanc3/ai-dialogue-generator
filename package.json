@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "creatomate": "^1.1.0",
     "localtunnel": "^2.0.2",
     "next": "14.1.0",
     "openai": "^4.28.0",

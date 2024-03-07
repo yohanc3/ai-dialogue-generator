@@ -34,7 +34,7 @@ export async function getVideoById(id: string){
 
 }
 
-export async function postSyncedVideo(audioUrl: string, videoUrl: string, webhookUrl: string){
+export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUrl: string){
 
   try {
     const response = await fetch(`https://api.synclabs.so/video`, {
@@ -48,7 +48,7 @@ export async function postSyncedVideo(audioUrl: string, videoUrl: string, webhoo
         videoUrl,
         synergize: true,
         webhookUrl: webhookUrl,
-        model: "sync-1.5.0"
+        model: "wav2lip++"
       })
     }); 
 

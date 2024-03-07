@@ -1,26 +1,53 @@
 
 //ENDPOINT: "https://{url}/lip-sync/updateJob"
 
-import { updateVideoStatus } from "@/app/lib/actions/actions";
+import { concatenateVideosByUrls, getJobIdByVideoId, getJobStatusById, getVideosByJobId, updateJobStatus} from "@/app/lib/actions/actions";
 
 export async function POST(req: Request){
 
   const res = await req.json();
-
+  
   console.log(res);
-
-  const { result } = res;
 
   try {
 
-    const response = await updateVideoStatus(result.id, result.status, result.url);
-  
-    console.log("FINAL RESPONSE: ", result);
-  
-    return new Response(JSON.stringify(res));
+        const jobId = res.id;
 
-  } catch (e) {
-    console.log(e);
+        const videosData = await getVideosByJobId(jobId);
+
+        if(!videosData){
+          throw new Error("Error at pulling videos by job id")
+        }
+    
+        const videosUrls = videosData
+          .sort((a, b) => a.video_number - b.video_number)
+          .map((videoData) => {
+            return videoData.url
+          })
+        
+        const videosUrlsContainsNulls = videosUrls.every(url => typeof url === "string");
+        
+        if(videosUrlsContainsNulls){
+          return new Response(JSON.stringify("VIDEO URL CONTAINED A NULL"));
+        }
+
+        const concatenatedVideoUrl = await concatenateVideosByUrls(videosUrls)
+
+        if(!concatenatedVideoUrl){
+          throw new Error("Error at concatenating videos")
+        }
+    
+        console.log("VIDEOS URLS", videosUrls);
+
+        const updatedJobs = await updateJobStatus(jobId, "COMPLETED", concatenatedVideoUrl)
+        console.log(updatedJobs);
+      
+
+      return new Response(JSON.stringify(concatenatedVideoUrl));
+
+  } catch(e){
+    console.log(e)
+    return new Response(JSON.stringify(e));
   }
 
 } 

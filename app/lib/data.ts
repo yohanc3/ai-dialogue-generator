@@ -6,7 +6,6 @@ const userId = 'c20a1304-da40-4211-91b3-59c01b195101';
 interface Job {
   url: string,
   id: string,
-  jobid: string,
   userId: string,
   status: string
 }
@@ -22,7 +21,7 @@ export async function fetchVideos(userId: string){
   try {
 
     const jobs = await sql<Job[]>`
-      SELECT jobid, url, status, userId
+      SELECT id, url, status, userId
       FROM jobs
       WHERE userId = ${userId}
     `;

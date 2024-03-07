@@ -11,7 +11,7 @@ export default function Form({addPollingId}: {addPollingId: addPollingId}){
 
   const [localId, setLocalId] = useState(generateId());
 
-  const submitFormWithJobId = createVideo.bind(null, localId)
+  const submitFormWithJobId = handleJobCreation.bind(null, localId)
 
   function generateId(){
     const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

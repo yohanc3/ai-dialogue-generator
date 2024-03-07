@@ -1,28 +1,33 @@
-import { updateVideoStatus, getJobsById } from "@/app/lib/actions/actions";
-import { tryOpenAi } from "@/app/lib/actions/actions";
+import { updateVideoStatus, getJobIdByVideoId, getJobStatusById, updateJobStatus, handleVideosCompletion } from "@/app/lib/actions/actions";
+import { generateDialogues } from "@/app/lib/actions/actions";
 
 export async function POST(req: Request){
 
   try {
     const res = await req.json();
 
-    const prompt = res.prompt;
+    const { result } = res;
 
-    console.log(prompt)
+    const statusUpdateResult = await updateVideoStatus(result.id, result.status, result.url);
 
-    const response = await tryOpenAi(prompt)
+    console.log("VIDEO STATUS UPDATE", statusUpdateResult)
 
-    const dialogues = response.choices[0].message.content
+    const jobId = await getJobIdByVideoId(result.id)
 
-    // const response = await updateVideoStatus(res.id, res.status, res.url)
+    const areJobVideosCompleted = await getJobStatusById(jobId);
 
-    // const jobs = getJobsById(res.id);
+    if(areJobVideosCompleted === "COMPLETED"){
 
-    return new Response(JSON.stringify({aiResponse: response}))
+      console.log("ALL VIDEOS ARE COMPLETED");
+
+      handleVideosCompletion(jobId);
+      
+    }
+
+    return new Response(JSON.stringify(statusUpdateResult));
+
   } catch(e){
     console.log(e)
   }
-
- 
 
 }
