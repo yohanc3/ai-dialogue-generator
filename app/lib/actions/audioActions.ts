@@ -1,12 +1,13 @@
 "use server"
 
-import { generateId, storeAudioName, uploadFileToS3 } from "./actions";
+import { storeAudioName, uploadFileToS3 } from "./data";
+import { generateId } from "./actions";
 
-const userId = 'c20a1304-da40-4211-91b3-59c01b195101';
+import { userId } from "./definitions";
 
-export async function generateAudio(text: string){
+export async function generateAudio(text: string, voiceId: string){
 
-  const apiUrl = 'https://api.elevenlabs.io/v1/text-to-speech/UymZwoAxnEVxnbvKNcsY/stream?output_format=mp3_22050_32';
+  const apiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_22050_32`;
   const options = {
     method: 'POST',
     headers: {
@@ -20,16 +21,19 @@ export async function generateAudio(text: string){
 
     const fetchedAudio = await fetch(apiUrl, options)
 
-    if(fetchedAudio.ok){
+    console.log("AUDIO OK?: ", fetchedAudio.ok)
 
-        return fetchedAudio;
+    if(fetchedAudio.ok){ 
+
+      return fetchedAudio;
 
     } else{
-      console.log("Something went wrong");
+      console.log("Something went wrong, dialogue: ", text);
+      throw new Error("Something went wrong at audio creation")
     }
 
   } catch(e){
-    console.log(e);
+    console.log("ERROR AT GENERATING AUDIO", e);
   }
 }
 

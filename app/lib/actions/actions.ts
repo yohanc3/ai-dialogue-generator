@@ -1,32 +1,38 @@
 "use server"
 
-import {S3Client} from '@aws-sdk/client-s3';
-import { Upload } from "@aws-sdk/lib-storage";
 import { unstable_noStore as noStore} from 'next/cache';
 import {customAlphabet} from "nanoid";
-import {z} from "zod";
 import postgres from "postgres";
-import { lipSyncVideo } from './videoActions';
+import { concatenateVideosByUrls, lipSyncVideo } from './videoActions';
 import { generateAudio, uploadAudioToS3 } from './audioActions';
 import { parse } from 'path';
 import OpenAI from "openai";
-const Creatomate = require("creatomate")
+import { getVideosByJobId, storeJob, storeVideoName, updateJobStatus } from './data';
 
-const userId = 'c20a1304-da40-4211-91b3-59c01b195101';
-
-interface dialogueData {
-  president: string;
-  dialogue: string;
-  dialogue_number: number;
-}
-
-const postgresSql = () => {
-  return postgres(process.env.DATABASE_URL!, {ssl: 'require'})
-}
-
-const FormSchema = z.object({
-  prompt: z.string(),
-})
+import { FormSchema, userId, character, promptFormat, dialogueResponse } from './definitions';
+import { ReceiptRussianRubleIcon } from 'lucide-react';
+import { people } from './characters';
+import { string } from 'zod';
+import { AuthError } from 'next-auth';
+ 
+// export async function authenticate(
+//   prevState: string | undefined,
+//   formData: FormData,
+// ) {
+//   try {
+//     await signIn('credentials', formData);
+//   } catch (error) {
+//     if (error instanceof AuthError) {
+//       switch (error.type) {
+//         case 'CredentialsSignin':
+//           return 'Invalid credentials.';
+//         default:
+//           return 'Something went wrong.';
+//       }
+//     }
+//     throw error;
+//   }
+// }
 
 export async function generateId(){
   const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -34,7 +40,11 @@ export async function generateId(){
   return nanoid();
 }
 
-export async function handleJobCreation(jobId: string, formData: FormData){
+export async function handleJobCreation(jobId: string, characters: character[], formData: FormData){
+
+  console.log("FORM DATA", formData);
+  console.log("jobid: ", jobId)
+  console.log("characters", characters);
 
   const parsedData = FormSchema.safeParse({
     prompt: formData.get('prompt')
@@ -47,30 +57,46 @@ export async function handleJobCreation(jobId: string, formData: FormData){
 
   const { prompt } = parsedData.data;
 
+  const charactersData = characters.map((char) => {
+    return ({name: char.name, personality: char.personality, slang: char.slang})
+   });
+
+  const content: promptFormat = {
+    topic: prompt,
+    characters: charactersData
+  }
+
+  console.log("CONTENT", content);
+
   try {
 
-    const rawDialogues = await generateDialogues(prompt)
+    const rawDialogues = await generateDialogues(content)
 
     if(!rawDialogues){
       console.log("ERROR RAW DIALOGUEs")
       return "Error";
     } 
 
-    const dialogues = await JSON.parse(rawDialogues).dialogues;
+    const dialogues = rawDialogues.dialogues;
 
+    console.log("TITLE: ", rawDialogues.title);
     console.log("DIALOGUES", dialogues)
 
-    const dialoguesCount = dialogues.length;
+    const savedJobQuery = await storeJob(jobId, userId, rawDialogues.title, "PENDING")
 
-    console.log("DIALOGUES COUNT", dialoguesCount)
+    const areDialoguesValid = dialogues.every((dialogue) => {
+      return dialogue.voiceId && dialogue.templateVideoUrl
+    })
 
-    const jobCreation = await saveJob(jobId, userId, "PENDING")
-
-    dialogues.map((dialogueData: dialogueData) => {
-      const dialogue = dialogueData.dialogue;
-      const videoNumber = dialogueData.dialogue_number;
-      createVideo(jobId, dialogue, videoNumber);
-    });
+    if(areDialoguesValid){
+      dialogues.map((dialogueData) => {
+        const dialogue = dialogueData.dialogue;
+        const videoNumber = dialogueData.dialogueNumber;
+        createVideo(jobId, dialogue, dialogueData.voiceId ?? "", dialogueData.templateVideoUrl ?? "", videoNumber);
+      });
+    } else {
+      console.log("ERROR AT VALIDATING JOBS, THEY ARE CORRUPTED");
+    }
 
   } catch(e){
     console.log(e);
@@ -79,36 +105,16 @@ export async function handleJobCreation(jobId: string, formData: FormData){
  
 }
 
-//Not done
-export async function saveJob(jobId: string, userId: string, status: string){
-  
-  const sql = postgresSql();
-
-  try{
-
-    const response = sql`
-    INSERT into jobs(id, userId, status)
-    VALUES(${jobId}, ${userId}, ${status})
-  `
-    return response;
-
-  } catch(e){
-    console.log("ERROR AT SAVING JOB")
-    return e;
-  }
-
-}
-
-export async function createVideo(jobId: string, dialogue: string, videoNumber: number){
+//Given a jobId and dialogue, a lip-synced video is created and stored.
+export async function createVideo(jobId: string, dialogue: string, voiceId: string, templateVideoUrl: string, videoNumber: number){
 
   // console.log("JOBID:", jobId);
   // console.log(formData);
-
   // console.log("HANDLE SUBMIT FIRED");
   
   try{
 
-    const audioBody = await generateAudio(dialogue);
+    const audioBody = await generateAudio(dialogue, voiceId);
 
     if(!audioBody){
       return "error, Audio response is undefined";
@@ -116,12 +122,11 @@ export async function createVideo(jobId: string, dialogue: string, videoNumber: 
 
     const audioUrl = await uploadAudioToS3(audioBody);
  
-    const bidenVideoURL = "https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/obama-template.mp4";
     const webhookUrl = `${process.env.TEMPORAL_URL}/api/lip-sync/updateVideoStatus`;
 
     console.log("WEBHOOK URL: ", webhookUrl);
 
-    const syncLabsRequest = await lipSyncVideo(audioUrl, bidenVideoURL, webhookUrl);
+    const syncLabsRequest = await lipSyncVideo(audioUrl, templateVideoUrl, webhookUrl);
     const syncLabsVideoId = syncLabsRequest.id;
 
     console.log("SYNC LABS VIDEO DATA: ", syncLabsRequest);
@@ -133,7 +138,7 @@ export async function createVideo(jobId: string, dialogue: string, videoNumber: 
 
     console.log("Job Id: ", jobId);
 
-    const userVideoSql = await storeVideoName(syncLabsVideoId, jobId, userId, "PENDING", videoNumber);
+    const storedVideoQueryResult = await storeVideoName(syncLabsVideoId, jobId, userId, "PENDING", videoNumber);
     
   } catch(e){
     console.log("Error at main routine")
@@ -142,306 +147,77 @@ export async function createVideo(jobId: string, dialogue: string, videoNumber: 
   }
 }
 
-export async function storeVideoName(id: string, jobId: string, userId: string, status: string, videoNumber: number){
+export async function generateDialogues(content: promptFormat){
+
+  const stringifiedContent = JSON.stringify(content);
+
+  console.log(stringifiedContent);
 
   try {
 
-    const sql = postgresSql();
+    const openai = new OpenAI({apiKey: process.env.OPENAI_KEY});
 
-    const result = await sql`
-      INSERT INTO videos(id, jobid, userId, status, video_number)
-      VALUES(${id}, ${jobId}, ${userId}, ${status}, ${videoNumber})
-    `;
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      response_format: {type: "json_object"},
 
-    return result;
-
-  }catch(e){
-    console.log(e);
-  }
-  
-}
-
-export async function storeAudioName(id: string, userId: string, url: string){
-
-  const sql = postgresSql();
-
-  try {
-    const result = await sql`
-      INSERT INTO audios (id, userId, url) VALUES (${id}, ${userId}, ${url})
-    `
-  }catch(e){
-    console.log(e);
-    return e;
-  }
-
-}
-
-export async function updateVideoStatus(videoId: string, status: string, url: string){
-
-  console.log("\njobId: ", videoId);
-  console.log("status: ", status);
-  console.log("url: ", url, "\n")
-
-  const sql = postgresSql();
-
-  try{
-
-    const result = await sql`
-    UPDATE videos 
-    SET 
-      status = ${status}, 
-      url = ${url}
-    WHERE id = ${videoId}
-    `;
-
-    console.log("VIDEO CORRECTLY UPDATED")
-
-    return result;
-
-  }catch(e){
-    console.log("fail at updating")
-    console.log("jobId: ", videoId)
-    console.log("status: ", status)
-    console.log(e);
-  }
-
-}
-
-export async function updateJobStatus(jobId: string, status: string, url: string){
-
-  const sql = postgresSql();
-
-  try {
-
-    const queryResult = sql`
-    
-      UPDATE jobs 
-      SET status = ${status}, url = ${url}
-      WHERE id = ${jobId}
-
-    `
-
-    return queryResult;
-
-  }catch(e){
-
-  }
-
-}
-
-export async function uploadFileToS3(bucketName: string, keyName: string, Body: any ){
-
-  noStore();
-
-  const awsAccessKey = process.env.AWS_ACCESS_KEY
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-  const awsRegion = process.env.AWS_DEFAULT_REGION
-
-  const client = new S3Client({
-    credentials: {
-      accessKeyId: awsAccessKey!,
-      secretAccessKey: secretAccessKey!,
-    },
-    region: awsRegion
-  })
-
-  
-  try{
-    
-    const Bucket = bucketName;
-    const Key = keyName;
-
-    const parallelUploads3 = new Upload({
-      client,
-      params: {
-        Bucket,
-        Key,
-        Body,
-      },
-      queueSize: 4,
-      partSize: 1024 * 1024 * 5,
-      leavePartsOnError: false,
+      messages: [
+        {
+          "role": "system",
+          "content": "You are a script writer that given a json object where you will find a topic, an array of human characters with their names, personalities, and maybe some slang. There are 6 rules you MUST follow sternly, here they are. 1: You shall write a silly, funny and amusing dialogue which will revolve around the given topic in the json object. 2: To write the dialogue, you will use the given personalities of each character to make up their dialogues, each character should talk to each other like it is a regular conversation between a group of friends. 3: Each dialogue length should add up to a total of 20 words maximum. 4: If you find 'putin' between the characters, return his dialogues in russian, not english, if you found 'putin' the person speaking after Putin should say 'I have no clue what you just said dawg, not gonna lie' If there's 1 dialogue per person already, add one more dialogue of someone speaking english saying it, make sure you place their name in the right slot as well as the dialogue. 5: You will return a title that synthesizes in 4-5 words the topic that was passed in to you, place the title in the 'title' key of the json you return. 6: Your response will be a json object in the next format: {'title': --topic belongs here--,'dialogues':[{'name':--insert name here--, 'dialogue': --insert character\'s personality here--}, {'name':--insert name here--, 'dialogue': --insert character\'s personality here--}, ...]}."
+        },
+        {
+          "role": "user",
+          "content": '{"topic": "What is Calculus?","characters":[{"name":"Elon Musk", "personality":"Beneath the surface of Musk’s success lies his thinking style, which is characterized by analytical and strategic thought processes. These traits have undoubtedly played a pivotal role in his ability to navigate complex challenges and propel his ventures forward. Elon Musk, the visionary entrepreneur behind companies like Tesla and SpaceX, is renowned for his exceptional thinking style that sets him apart in the business world. His approach to problem-solving and strategic planning has not only revolutionized industries but also inspired a new generation of innovators. Musk’s analytical thinking allows him to meticulously dissect problems, identify underlying causes, and devise creative solutions. His unwavering attention to detail and ability to see things from multiple perspectives have contributed to the exceptional performance of his companies.","slang":[]},{"name":"Jonathan Blow","personality":"He tends to speak with a direct and analytical manner, often delving into complex topics related to game design and philosophy. He will usually extrapolate any definition, question, or matter to a philosophical point","slang":["Well think about this, ... "]},{"name":"Theo","personality":"The individual\'s speaking style is characterized by a mixture of passion, frustration, and conviction. They articulate their thoughts with clarity and assertiveness, conveying their emotions and viewpoints with intensity. There\'s a sense of urgency in their words, as they address issues they perceive as significant and in need of attention. They speak with a resolute tone, unafraid to express their opinions and challenge the status quo. Despite the underlying disappointment and disillusionment, their speech is marked by determination and a drive to effect change. They communicate with a sense of purpose, aiming to convey their message effectively and make an impact on their audience.","slang":[]}]}'
+        },
+        {
+          "role": "assistant",
+          "content": `{'title': 'Calculus', 'dialogues': [{'name': 'Elon Musk', 'dialogue': 'I believe calculus is the key to unlocking the mysteries of the universe. It\'s all about those derivatives, man.'}, {'name': 'Jonathan Blow', 'dialogue': 'Well think about this, the beauty of calculus lies in its ability to model real-world phenomena with precision.'}, {'name': 'Theo', 'dialogue': 'You're damn right dawg, calculus is like a rollercoaster of functions, twisting and turning through the mathematical landscape.'}]}`
+        },
+        {
+          "role": "user",
+          "content": stringifiedContent
+        },
+      ],
+      temperature: 1,
+      max_tokens: 256,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
     });
-    
-    return await parallelUploads3.done();
+  
+    const response = completion.choices[0].message.content;
+  
+    if(!response) return;
+  
+    const gptResponse: dialogueResponse = JSON.parse(response);
+  
+    const dialoguesResponse = {...gptResponse}
+    const newDialogues = dialoguesResponse.dialogues.map((dialogue, index) => {
 
-  } catch(e){
-    console.log(e);
-  }
-};
+      const character = people.find((char) => char.name === dialogue.name);
 
-export async function getAllJobs(){
-  const sql = postgresSql()
+      const returnDialogue = {
+        ...dialogue,
+        dialogueNumber: index + 1,
+        voiceId: character?.voiceId,
+        templateVideoUrl: character?.videoUrl
+        }
 
-  const jobs = await sql`
-  SELECT * FROM jobs 
-  WHERE status = 'COMPLETED'
-  `
-  return jobs;
-}
-
-export async function getJobIdByVideoId(videoId: string){
-
-  const sql = postgresSql();
-
-  try {
-
-    const job = await sql`
-    SELECT jobId FROM videos
-    WHERE id = ${videoId}
-    `
-    const jobId = job[0].jobid;
-
-    if(!jobId) throw new Error("ERROR AT OBTAINING JOBID BY VIDEOID");
-
-    console.log("JOBID: ", jobId);
-
-    return jobId;
-
-  } catch(e) {
-    console.log("ERROR AT getJobIdByVideoId", e);
-    return e;
-  }
-
-}
-
-export async function generateDialogues(prompt: string){
-
-  const openai = new OpenAI({apiKey: process.env.OPENAI_KEY});
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    response_format: {type: "json_object"},
-
-    //original content: "You are an assistant that based on the given prompt you will develop a dialogue between 3 presidents. These presidents are: Barack Obama, Donald Trump, and Joe Biden. Make the conversation interactive, the presidents should be talking to each other as well as the audience. Donald Trump and Obama should occasionally call Joe Biden 'Sleepy Joe'. And Obama should include 'ain't that right bro?'occasionally as well. Each president must have at least two dialogues. Your job is to make a dialogue between those 3 with the thematic of the given prompt. For the JSON that you will return, use the next format:{'dialogues': [{'president': {insert president name here},    'dialogue': {insert dialogue here}, 'dialogue_number': (start it at 1, increase it by 1 each time a new dialogue is created)}...]} In the JSON that you return, make sure that the president field is only populated with the last name of the president in lowercase."
-
-    messages: [
-      {
-        "role": "system",
-        "content": "You are an assistant that based on the given prompt you will develop a dialogue between Obama playing 3 different roles. Your job is to make a dialogue between those 3 with the thematic of the given prompt, the role of each Obama is up to you, just make sure they mention what role they play. For the JSON that you will return, use the next format:{'dialogues': [{'president': {insert president name here},    'dialogue': {insert dialogue here}, 'dialogue_number': (start it at 1, increase it by 1 each time a new dialogue is created)}...]} In the JSON that you return, make sure that the president field is only populated with the last name of the president in lowercase."
-      },
-      {
-        "role": "user",
-        "content": "Provide a dialogue about what calculus is"
-      },
-      {
-        "role": "assistant",
-
-        //original content: "{'dialogues': [{'president': 'obama','dialogue': 'Calculus is a branch of mathematics that involves the study of rates of change and accumulation. Its all about how things change and how to measure and understand those changes, ain't that right?', 'dialogue_number': 1},{'president': 'trump','dialogue': 'Well, let me tell you, Sleepy Joe, calculus is like figuring out how fast your approval ratings are dropping! It is all about those slopes and curves, am I right?', 'dialogue_number': 2},{'president': 'biden','dialogue': 'That is a great explanation, Obama. Calculus helps us understand the world around us by looking at the big picture through the lens of change and motion.', 'dialogue_number': 3}]}"
-
-        "content": "{'dialogues': [{'president': 'obama','dialogue': 'Calculus is a branch of mathematics that involves the study of rates of change and accumulation. Its all about how things change and how to measure and understand those changes, ain't that right?', 'dialogue_number': 1},{'president': 'obama','dialogue': 'Well, let me tell you, calculus is like figuring out how fast your approval ratings are dropping! It is all about those slopes and curves, am I right?', 'dialogue_number': 2},{'president': 'obama','dialogue': 'That is a great explanation, Obama. Calculus helps us understand the world around us by looking at the big picture through the lens of change and motion.', 'dialogue_number': 3}]}"
-      },
-      {
-        "role": "user",
-        "content": `Provide a silly, witty, comical dialogue with the thematic being: ${prompt}.`
-      },
-    ],
-    temperature: 1,
-    max_tokens: 256,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-  });
-
-  const response = completion.choices[0].message.content;
-
-  return response;
-
-}
-
-export async function getJobStatusById(jobId: string){
-
-  const sql = postgresSql();
-
-  try {
-
-    const queryResult = await sql`
-    SELECT * FROM videos 
-    WHERE jobid = ${jobId}
-    `
-
-    const areJobVideosCompleted = queryResult.every((video) => {
-      return video.status === "COMPLETED";
-    })
-
-    console.log("ARE ALL VIDEOS COMPLETED?, ", areJobVideosCompleted);
-
-    return areJobVideosCompleted ? "COMPLETED" : "PENDING";
-
-  } catch(e){
-    console.log("ERROR AT PULLING JOB STATUS");
-    return null;
-  }
-
-
-}
-
-interface videosByJobId {
-  id: string,
-  userid: string,
-  url: string | null,
-  status: string,
-  jobid: string,
-  video_number: number
-}
-
-export async function getVideosByJobId(jobId: string){
-  const sql = postgresSql();
-
-  try {
-    const queryResult = await sql<[videosByJobId]>`
-    SELECT * FROM videos 
-    WHERE jobid = ${jobId}
-  `
-    const results = queryResult.map((video) => video);
-
-    return results;
-
-  } catch(e) {
-    console.log("Error at pulling videos by job id")
-    return null;
-  }
-
-
-}
-
-export async function concatenateVideosByUrls(urls: (string | null)[]){
-
-  const apiKey = process.env.CREATOMATE_KEY;
-
-  try {
-
-    const elements = urls.map((url) => {
-      return new Creatomate.Video({
-        track: 1,
-        source: url
-      })
-    })
-
-    const client = new Creatomate.Client(apiKey);
-
-    const source = new Creatomate.Source({
-      outputFormat: "mp4",
-      width: 1280,
-      height: 720,
-      elements
+      return returnDialogue;
     })
   
-    //returns an array
-    const video = await client.render({source});
-    console.log(video);
+    const finalResponse = {title: dialoguesResponse.title, dialogues: newDialogues}
   
-    const videoUrl = video[0].url;
+    return finalResponse;
 
-    console.log("FINAL VIDEO URL: ", videoUrl)
-    return videoUrl;
-
-  } catch (e) {
-    console.log("ERROR AT CONCATENATING VIDEOS", e);
-    return null;
+  } catch(e){
+    console.log("ERROR AT CREATING AI: ", e)
   }
+
 }
 
+//When all videos from a job are completed, the videos get concatenated.
 export async function handleVideosCompletion(jobId: string){
 
   try {
@@ -477,5 +253,25 @@ export async function handleVideosCompletion(jobId: string){
     console.log(e)
     return e;
   }
+
+}
+
+export async function milisecondsToTime(timeInMiliseconds: number){
+
+
+  const seconds = (timeInMiliseconds / 1000);
+
+  const minutes = seconds / 60;
+  const hours = minutes / 60;
+  const days = hours / 24;
+  const months = days / 30;
+
+  if(seconds < 60) return `${seconds.toFixed(0)} seconds ago.`;
+  else if(minutes < 60) return `${minutes.toFixed(0)} minutes ago.`;
+  else if (hours < 24) return `${hours.toFixed(0)} hours ago.`;
+  else if (days < 30) return `${days.toFixed(0)} days ago.`;
+  else return `${months.toFixed(0)} months ago.`;
+
+
 
 }

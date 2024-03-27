@@ -1,5 +1,5 @@
-import { concatenateVideosByUrls, getJobIdByVideoId, getJobStatusById, handleVideosCompletion, storeVideoName, updateJobStatus} from "@/app/lib/actions/actions";
-import { getVideosByJobId } from "@/app/lib/actions/actions";
+import { handleVideosCompletion } from "@/app/lib/actions/actions";
+
 
 interface videosByJobId {
   id: string,
@@ -17,9 +17,11 @@ export async function POST(req: Request){
 
     const { result } = res;
 
-    const r = handleVideosCompletion(result.id);
+    console.log("RESULT OF VIDEO HERE BRODA: ", result)
 
-    return new Response(JSON.stringify(result));
+    // const r = handleVideosCompletion(result.id);
+
+    return new Response(JSON.stringify(res));
 
 
 

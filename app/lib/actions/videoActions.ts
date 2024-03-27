@@ -1,6 +1,7 @@
 "use server"
 
 import {z} from "zod";
+const Creatomate = require("creatomate")
 
 export async function getVideoById(id: string){
 
@@ -37,18 +38,18 @@ export async function getVideoById(id: string){
 export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUrl: string){
 
   try {
-    const response = await fetch(`https://api.synclabs.so/video`, {
+    const response = await fetch(`https://api.synclabs.so/lipsync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': process.env.SYNC_LABS_API_KEY!,
       },
       body: JSON.stringify({
-        audioUrl,
-        videoUrl,
+        audioUrl: audioUrl,
+        model: "wav2lip++",
         synergize: true,
+        videoUrl: videoUrl,
         webhookUrl: webhookUrl,
-        model: "wav2lip++"
       })
     }); 
 
@@ -60,4 +61,41 @@ export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUr
     console.log(e);
   }
 
+}
+
+export async function concatenateVideosByUrls(urls: (string | null)[]){
+
+  const apiKey = process.env.CREATOMATE_KEY;
+
+  try {
+
+    const elements = urls.map((url) => {
+      return new Creatomate.Video({
+        track: 1,
+        source: url
+      })
+    })
+
+    const client = new Creatomate.Client(apiKey);
+
+    const source = new Creatomate.Source({
+      outputFormat: "mp4",
+      width: 1280,
+      height: 720,
+      elements
+    })
+  
+    //returns an array
+    const video = await client.render({source});
+    console.log(video);
+  
+    const videoUrl = video[0].url;
+
+    console.log("FINAL VIDEO URL: ", videoUrl)
+    return videoUrl;
+
+  } catch (e) {
+    console.log("ERROR AT CONCATENATING VIDEOS", e);
+    return null;
+  }
 }
