@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 import UserAvatar from "./ui/userAvatar";
 import { Session } from "inspector";
 import NavLogo from "./ui/navLogo";
+import clsx from "clsx";
+import NavLinks from "./ui/navLinks";
 
 export default async function NavBar(){
 
@@ -20,11 +22,8 @@ export default async function NavBar(){
 
             <NavLogo/>
 
-              {
-               session ?
-                <a href="/usage" className="text-sm font-light dark:hover:text-white hover:text-neutral-900 duration-200">Usage</a> 
-                : ""
-              }
+            <NavLinks session={!!session}/>
+            
             <ThemeToggler/>
 
           </div>

@@ -10,6 +10,7 @@ export default function UserAvatar({session, signOut}: {session: Session | null,
 
   const [isTabOpen, setIsTabOpen] = useState<boolean>(false);
   const divRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   const isLoggedIn = !!session;
   const avatarUrl = session && session.user?.image ? session.user.image : "https://gravatar.com/avatar/?d=mp"
@@ -18,7 +19,8 @@ export default function UserAvatar({session, signOut}: {session: Session | null,
   useEffect(() => {
 
     const handleClickOutside = (event: Event) => {
-      if (divRef.current && !divRef.current.contains(event.target as Node)) {
+      if (divRef.current && !divRef.current.contains(event.target as Node) && imageRef.current && !imageRef.current.contains(event.target as Node)) {
+        console.log("clicked");
         setIsTabOpen(false);
       }
     };
@@ -32,10 +34,12 @@ export default function UserAvatar({session, signOut}: {session: Session | null,
 
     return (
       <main>
-        <Image src={avatarUrl} alt="Avatar" 
-          className="rounded-full cursor-pointer" width={30} height={30} 
-          onClick={(() => setIsTabOpen(!isTabOpen))}
-        />
+        <div ref={imageRef}>
+          <Image src={avatarUrl} alt="Avatar" 
+            className="rounded-full cursor-pointer" width={30} height={30} 
+            onClick={(() => setIsTabOpen(!isTabOpen))}
+          />
+        </div>
         <div className="flex justify-center items-center">
 
           <div ref={divRef} className= {clsx(`bg-white absolute rounded-sm top-[55px] right-5 space-y-2 border`, 

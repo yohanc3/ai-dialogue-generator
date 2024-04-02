@@ -8,6 +8,29 @@ import postgresSql from "@/app/lib/db/db"
 import { Jobs, Video, Error as ErrorType, RawJobs, User} from "./definitions";
 import { milisecondsToTime } from "./actions";
 
+export async function getUserDailyCreatedVideos(userId: string){
+  const sql = postgresSql();
+
+  const videosDates = await sql `
+    SELECT date FROM jobs
+    WHERE userid = ${userId};
+  `
+  const todayToDateString = new Date().toLocaleDateString();
+
+  const todayCreatedVideos = videosDates.map((video) => {
+    const transformedDate = new Date(video.date).toLocaleDateString();
+    return transformedDate;
+  })
+  .reduce((prev, dateToDateString) => {
+    if(dateToDateString === todayToDateString){
+      return prev + 1;
+    }
+    return prev;
+  }, 0);
+
+  return todayCreatedVideos;
+}
+
 export async function getVideoUrlById(id: string){
   const sql = postgresSql();
   const url = await sql`
@@ -103,8 +126,8 @@ export async function storeJob(jobId: string, userId: string, title: string, sta
   try{
 
     const response = sql`
-    INSERT into jobs(id, userId, title, status, date)
-    VALUES(${jobId}, ${userId}, ${title}, ${status}, ${Date.now()})
+    INSERT into jobs(id, userId, title, status, date, localdate)
+    VALUES(${jobId}, ${userId}, ${title}, ${status}, ${new Date(Date.now())}, ${new Date().toLocaleDateString()})
     `
     return response;
 

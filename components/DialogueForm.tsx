@@ -5,6 +5,7 @@ import Form from "./Form";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SafeJobs, Jobs, Job } from "@/app/lib/actions/definitions";
+import { getUserDailyCreatedVideos } from "@/app/lib/actions/data";
 
 type addPollingId = (id: string) => void;
 
@@ -12,6 +13,10 @@ export default function DialogueForm({jobs, userId}: {jobs: SafeJobs, userId: st
   const router = useRouter();
   const [pollingIds, setPollingIds] = useState<string[]>([]);
   const POLL_INTERVAL = 5000;
+
+  if(!userId){
+    router.push("/");
+  }
 
   function addPollingId(id: string){
     const newPollingIds = [...pollingIds, id];
@@ -52,7 +57,7 @@ export default function DialogueForm({jobs, userId}: {jobs: SafeJobs, userId: st
 
   return (
   <main className="flex flex-col justify-center w-full">
-    <Form addPollingId={addPollingId} userId={userId}/>
+    {userId ? <Form addPollingId={addPollingId} userId={userId}/> : ""}
   </main>
 
 

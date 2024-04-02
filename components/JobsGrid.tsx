@@ -1,4 +1,4 @@
-import { getJobsByUserId } from '@/app/lib/actions/data';
+import { getJobsByUserId, getUserDailyCreatedVideos } from '@/app/lib/actions/data';
 import { SafeJobs } from '@/app/lib/actions/definitions';
 import {unstable_noStore as noStore} from "next/cache";
 import VideoCard from './ui/videoCard';
@@ -8,7 +8,6 @@ export default async function JobsGrid({jobs}: {jobs: SafeJobs}){
 
   noStore();
 
-  const userId = 'c20a1304-da40-4211-91b3-59c01b195101';
   console.log("RECEIVED JOBS: ", jobs);
   const isArray = Array.isArray(jobs);
 
@@ -36,7 +35,7 @@ export default async function JobsGrid({jobs}: {jobs: SafeJobs}){
                 }) }
             </section>
 
-          : <div className='flex justify-center text-[#d2222d]'>Error, message: {jobs.message}</div>
+          : <div className='flex justify-center text-[#d2222d]'>An error has occurred, try again later.</div>
         }
      
     </main>

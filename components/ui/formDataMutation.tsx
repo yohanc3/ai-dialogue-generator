@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ChevronUpIcon, ChevronDownIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { character, Dialogue, DialogueData, Dialogues } from "@/app/lib/actions/definitions";
 import { Label } from "./label";
 import { Input } from "./input";
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import PersonalizedAvatar from "../PersonalizedAvatar";
 import { people } from "@/app/lib/actions/characters";
+import { ReceiptRussianRuble } from "lucide-react";
 
 export default function FormDataMutation(
   {dialogueData, onSubmit, }:
@@ -25,19 +26,30 @@ export default function FormDataMutation(
   const [title, setTitle] = useState<string>(`${dialogueData.title}`)
   const [dialogues, setDialogues] = useState<Dialogues>([...dialogueData.dialogues]);
   const [finalDialogueData, setFinalDialogueData] = useState<DialogueData>(dialogueData);
+  const [isFinalDialogueDataEmpty, setIsFinalDialogueDataEmpty] = useState<boolean>(false);
 
   const [newDialogue, setNewDialogue] = useState<string>();
   const [newCharacter, setNewCharacter] = useState<character>();
   const [isNewDialogueValid, setIsNewDialogueValid] = useState<boolean>(true);
 
   useEffect(() => {
-    setFinalDialogueData({title, dialogues});
-    console.log("FINAL DIALOGUE DATA CHANGED: ", finalDialogueData);
+    const newFinalDialogues = {title, dialogues};
+    setFinalDialogueData(newFinalDialogues);
+    console.log("FINAL DIALOGUE DATA CHANGED: ", newFinalDialogues);
   }, [title, dialogues])
 
   useEffect(() => {
     setIsNewDialogueValid(true);
   }, [newDialogue, newCharacter])
+
+  function handleSubmit(){
+    if(dialogues.length <= 0){
+      setIsFinalDialogueDataEmpty(true);
+      return;
+    }
+    return;
+    onSubmit(finalDialogueData);
+  }
 
   function moveUp(dialogue: Dialogue){
 
@@ -94,6 +106,13 @@ export default function FormDataMutation(
     
   }
 
+  function deleteDialogue(dialogue: Dialogue){
+    const newDialogues = [...dialogues];
+    newDialogues.splice((dialogue.dialogueNumber-1), 1);
+    console.log("NEW DIALOGUES: ", newDialogues);
+    setDialogues(newDialogues);
+  }
+
   
   return (
     <main className="flex justify-center flex-col px-8 py-6 gap-y-10">
@@ -119,7 +138,14 @@ export default function FormDataMutation(
                   dialogues.map((dialogue, index) => {
                     return (
                       <div className="p-4 flex justify-center flex-col" key={dialogue.dialogueNumber}>
-                      <div className="text-sm">{dialogue.dialogueNumber}.- Character: <span className="font-semibold">{dialogue.name}</span></div>
+                      <div className="text-sm flex ">
+                        <div className="">
+                          {dialogue.dialogueNumber}.- Character: <span className="font-semibold">{dialogue.name}</span>
+                        </div>
+                        <div className="flex text-xs mb-1 ml-8 px-2 rounded-lg font-semibold text-red-600 bg-red-100">
+                          <button onClick={() => deleteDialogue(dialogue)}>Delete</button>
+                        </div>
+                      </div>
                         <div className="flex flex-row items-center gap-x-2">
                           <Textarea value={dialogue.dialogue} className="" onChange={(e) => {
                             const copiedDialogues = [...dialogues];
@@ -182,8 +208,8 @@ export default function FormDataMutation(
                  Add dialogue 
               </Button>
               <div className="flex flex-col ">
-                { !isNewDialogueValid && (newDialogue?.length === 0) ? <span className="text-red-500/95 text-sm p-0 m-0">Type a dialogue first</span> : "" }
-                { !isNewDialogueValid && (!newCharacter) ? <span className="text-red-500/95 text-sm p-0 m-0">Choose a character first</span> : "" }
+                { !isNewDialogueValid && (newDialogue?.length === 0) ? <span className="text-[#ffbf00]/95 text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Type a dialogue first</span> : "" }
+                { !isNewDialogueValid && (!newCharacter) ? <span className="text-[#ffbf00] text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Choose a character first</span> : "" }
               </div>
             </div>
           </Card>
@@ -191,8 +217,9 @@ export default function FormDataMutation(
         </section>
 
         </div>
+        { isFinalDialogueDataEmpty ? <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2"> {<ExclamationTriangleIcon width={20}/>} You must have at least 1 dialogue</span> : "" }
         <div className="flex w-full">
-          <Button className="flex w-full" onClick={() => onSubmit(finalDialogueData)}>
+          <Button className="flex w-full" onClick={() => handleSubmit()}>
             Create
           </Button>
         </div>

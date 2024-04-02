@@ -1,5 +1,5 @@
 import { milisecondsToTime } from "@/app/lib/actions/actions";
-import { getJobsByUserId } from "@/app/lib/actions/data"
+import { getJobsByUserId, getUserDailyCreatedVideos } from "@/app/lib/actions/data"
 import { SafeJobs, userId, Error } from "@/app/lib/actions/definitions";
 import DialogueForm from "@/components/DialogueForm";
 import JobsGrid from "@/components/JobsGrid";
@@ -17,6 +17,7 @@ export default async function Page(){
   console.log("SESSION: ", session);
 
   let jobs: SafeJobs = {message: "No user loaded", problemCause: "auth", originalError: "page"};
+  let todaysCreatedVideos: number;
 
   if(!session?.user){
     redirect('/');
