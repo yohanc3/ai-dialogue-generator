@@ -1,26 +1,22 @@
-"use client"
-
-import { ThemeToggler } from "@/components/ThemeToggler";
+import { ThemeToggler } from "@/components/ui/ThemeToggler";
 import ButtonLink from "@/components/ui/buttonLink";
 import Image from "next/image";
 import NavBar from "@/components/NavBar";
 import { unstable_noStore as noStore } from "next/cache";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import HomeImage from "@/components/HomeImage";
+import { auth, signIn } from "../auth";
+import SignInOutButton from "@/components/ui/sign-out-button";
 
-export default function Home() {
 
-  const isSignedIn = true;
-  const { resolvedTheme } = useTheme();
+export default async function Home() {
 
-  const [theme, setTheme] = useState("");
+  const session = await auth();
 
-  useEffect(() => {
-    setTheme(localStorage.theme);
-  }, [resolvedTheme])
+  console.log("SESSION RECEIVED AT HOME ORIGIN: ", session);
 
   return (
-      <div className="w-full">
+    <div className="w-full">
+        <NavBar/>
 
        <main className="flex px-24 w-full items-center justify-center h-screen flex-col placeholder:w-full text-center space-y-20 pt-[5rem]">
 
@@ -34,26 +30,24 @@ export default function Home() {
           </h2>
 
           <div>
-            <ButtonLink href={isSignedIn ? "/home" : "/login"}
-              className=" bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 py-6 px-8 rounded-lg">
-              Get Started 
-            </ButtonLink>
+            {
+              session ? 
+              <ButtonLink className="bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 rounded-lg" href="/home" > Get Started </ButtonLink>
+              :
+              <SignInOutButton signInOut={async () => {
+                "use server";
+                await signIn('google', {redirectTo: "/home"})
+              }}
+                className=" bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2">
+                Get Started 
+              </SignInOutButton>
+            }
+
           </div>
 
         </div>
 
-        <div className="max-w-6xl lg:px-8">
-          <div className="rounded-xl bg-neutral-900/5 dark:bg-neutral-100/10 -m-2 ring-1 p-2 ring-inset ring-neutral-900/10 lg:-m-4 lg:rounded-2xl lg:p-4 ">
-            <Image
-              src={theme === "light" ? "/home.png" : theme === "dark" ? "/home:dark.png" : "/home:dark.png"}
-              alt="home image"
-              width={1000}
-              height={636}
-              quality={90}
-              priority={true}
-            />
-          </div>
-        </div>
+        <HomeImage/>
 
        </main>
 

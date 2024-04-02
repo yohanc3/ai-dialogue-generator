@@ -1,3 +1,5 @@
+const { hostname } = require("os");
+
 module.exports = {
   webpack5: true,
   webpack: (config) => {
@@ -5,4 +7,16 @@ module.exports = {
 
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "gravatar.com"
+      }
+    ]
+  }
 };

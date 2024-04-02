@@ -26,12 +26,25 @@ export type character = {
   slang: string[]
 }
 
-export interface promptFormat {
+export interface PromptFormat {
   topic: string,
   characters: character[]
 }
 
-// {'title': --topic belongs here--,'dialogues':[{'name':--insert name here--, 'dialogue': --insert character\'s personality here--}, {'name':--insert name here--, 'dialogue': --insert character\'s personality here--}, ...]}
+export interface DialogueData {
+  title: string,
+  dialogues: Dialogues
+}
+
+export interface Dialogue {
+  dialogueNumber: number;
+  voiceId: string | undefined;
+  templateVideoUrl: string | undefined;
+  name: string;
+  dialogue: string;
+}
+
+export type Dialogues = Dialogue[];
 
 type AIdialogue = {
   name: string,
@@ -40,7 +53,7 @@ type AIdialogue = {
   voiceId? : string
 }
 
-export interface dialogueResponse {
+export interface RawDialogueResponse {
   title: string;
   dialogues: AIdialogue[]
 }
@@ -57,6 +70,7 @@ export interface Video {
 export type Error = {
   message: string,
   problemCause: string
+  originalError: string
 }
 
 export type Job = {

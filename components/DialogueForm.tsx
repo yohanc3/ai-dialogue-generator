@@ -8,8 +8,7 @@ import { SafeJobs, Jobs, Job } from "@/app/lib/actions/definitions";
 
 type addPollingId = (id: string) => void;
 
-export default function DialogueForm({jobs}: {jobs: SafeJobs}){
-  const userId = 'c20a1304-da40-4211-91b3-59c01b195101';
+export default function DialogueForm({jobs, userId}: {jobs: SafeJobs, userId: string | undefined}){
   const router = useRouter();
   const [pollingIds, setPollingIds] = useState<string[]>([]);
   const POLL_INTERVAL = 5000;
@@ -41,11 +40,9 @@ export default function DialogueForm({jobs}: {jobs: SafeJobs}){
 
     if (Array.isArray(jobs)){
       setPollingIds((cur) => {
-        console.log("parsing through jobs...");
         return cur.filter((id) => {
 
           let foundJob = jobs.find(job => job.id === id);
-          console.log("FOUND JOB: ", foundJob);
           return jobs.find(job => job.id === id)?.status === 'PENDING';
         })
       })
@@ -55,7 +52,7 @@ export default function DialogueForm({jobs}: {jobs: SafeJobs}){
 
   return (
   <main className="flex flex-col justify-center w-full">
-    <Form addPollingId={addPollingId}/>
+    <Form addPollingId={addPollingId} userId={userId}/>
   </main>
 
 

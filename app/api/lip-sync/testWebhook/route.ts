@@ -19,7 +19,6 @@ export async function POST(req: Request){
 
     console.log("RESULT OF VIDEO HERE BRODA: ", result)
 
-    // const r = handleVideosCompletion(result.id);
 
     return new Response(JSON.stringify(res));
 

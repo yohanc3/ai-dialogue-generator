@@ -1,4 +1,4 @@
-import { handlers } from "@/app/lib/actions/auth";
+import { handlers } from "@/auth";
 
 export const {GET, POST} = handlers;
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/ui/theme-provider"
 import { cn } from "@/app/lib/utils";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
@@ -26,10 +26,8 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
           disableTransitionOnChange
         > 
-          <NavBar/>
           {children}
         </ThemeProvider>
       </body>

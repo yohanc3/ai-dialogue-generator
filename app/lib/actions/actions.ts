@@ -9,80 +9,66 @@ import { parse } from 'path';
 import OpenAI from "openai";
 import { getVideosByJobId, storeJob, storeVideoName, updateJobStatus } from './data';
 
-import { FormSchema, userId, character, promptFormat, dialogueResponse } from './definitions';
+import { FormSchema, userId, character, PromptFormat, RawDialogueResponse, DialogueData } from './definitions';
 import { ReceiptRussianRubleIcon } from 'lucide-react';
 import { people } from './characters';
 import { string } from 'zod';
 import { AuthError } from 'next-auth';
  
-// export async function authenticate(
-//   prevState: string | undefined,
-//   formData: FormData,
-// ) {
-//   try {
-//     await signIn('credentials', formData);
-//   } catch (error) {
-//     if (error instanceof AuthError) {
-//       switch (error.type) {
-//         case 'CredentialsSignin':
-//           return 'Invalid credentials.';
-//         default:
-//           return 'Something went wrong.';
-//       }
-//     }
-//     throw error;
-//   }
-// }
-
 export async function generateId(){
   const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const nanoid = await customAlphabet(alphabet, 17);
+  const nanoid = customAlphabet(alphabet, 17);
   return nanoid();
 }
 
-export async function handleJobCreation(jobId: string, characters: character[], formData: FormData){
-
-  console.log("FORM DATA", formData);
-  console.log("jobid: ", jobId)
-  console.log("characters", characters);
-
-  const parsedData = FormSchema.safeParse({
-    prompt: formData.get('prompt')
-  })
-
-  if(!parsedData.success){
-    console.log("Prompt is invalid");
-    return;
-  }
-
-  const { prompt } = parsedData.data;
+export async function handleContentCreation(characters: character[], prompt: string){
 
   const charactersData = characters.map((char) => {
     return ({name: char.name, personality: char.personality, slang: char.slang})
    });
 
-  const content: promptFormat = {
+  const content: PromptFormat = {
     topic: prompt,
     characters: charactersData
   }
 
-  console.log("CONTENT", content);
+  try{
+
+    const dialogueData = await generateDialogues(content)
+    console.log("DIALOGUE DATA AI GENERATED: ", dialogueData)
+
+    if(dialogueData){
+      return dialogueData;
+    } else {
+      throw new Error("Error at creating dialogues, they are undefined");
+    }
+
+  } catch(e){
+    console.log("ERROR AT DIALOGUES GENERATION, ERROR: ", e);
+  }
+
+}
+
+export async function handleJobCreation(jobId: string, userId: string, dialogueData: DialogueData){
+
+  if(!userId) throw new AuthError("userId not valid");
+
+  console.log("jobid: ", jobId)
+  console.log("AT JOB CREATION, RAW DIALOGUE DATA: ", dialogueData);
 
   try {
 
-    const rawDialogues = await generateDialogues(content)
-
-    if(!rawDialogues){
+    if(!dialogueData){
       console.log("ERROR RAW DIALOGUEs")
       return "Error";
     } 
 
-    const dialogues = rawDialogues.dialogues;
+    const dialogues = dialogueData.dialogues;
 
-    console.log("TITLE: ", rawDialogues.title);
+    console.log("TITLE: ", dialogueData.title);
     console.log("DIALOGUES", dialogues)
 
-    const savedJobQuery = await storeJob(jobId, userId, rawDialogues.title, "PENDING")
+    const savedJobQuery = await storeJob(jobId, userId, dialogueData.title, "PENDING")
 
     const areDialoguesValid = dialogues.every((dialogue) => {
       return dialogue.voiceId && dialogue.templateVideoUrl
@@ -147,7 +133,7 @@ export async function createVideo(jobId: string, dialogue: string, voiceId: stri
   }
 }
 
-export async function generateDialogues(content: promptFormat){
+export async function generateDialogues(content: PromptFormat){
 
   const stringifiedContent = JSON.stringify(content);
 
@@ -190,24 +176,22 @@ export async function generateDialogues(content: promptFormat){
   
     if(!response) return;
   
-    const gptResponse: dialogueResponse = JSON.parse(response);
-  
-    const dialoguesResponse = {...gptResponse}
-    const newDialogues = dialoguesResponse.dialogues.map((dialogue, index) => {
+    const gptResponse: RawDialogueResponse = JSON.parse(response);
+
+    const dialogues = gptResponse.dialogues.map((dialogue, index) => {
 
       const character = people.find((char) => char.name === dialogue.name);
 
-      const returnDialogue = {
+      return {
         ...dialogue,
         dialogueNumber: index + 1,
         voiceId: character?.voiceId,
         templateVideoUrl: character?.videoUrl
         }
 
-      return returnDialogue;
     })
   
-    const finalResponse = {title: dialoguesResponse.title, dialogues: newDialogues}
+    const finalResponse: DialogueData = {title: gptResponse.title, dialogues}
   
     return finalResponse;
 

@@ -26,17 +26,18 @@ export default async function JobsGrid({jobs}: {jobs: SafeJobs}){
       </h1>
     </div>
 
-      <section className='grid grid-cols-3 w-full gap-12 place-items-center'>
         {
           jobsLength === 0 ? 
-            <div> No jobs have been created yet </div> 
+            <div className='flex justify-center text-[#ffbf00]'> No videos have been created yet </div> 
           : isArray ? 
-              jobs.map((job) => {
-                return <VideoCard job={job} key={job.id}/>
-              }) 
-          : <div>Error, message: {jobs.message}</div>
+            <section className='grid grid-cols-3 w-full gap-12 place-items-center'>
+                {jobs.map((job) => {
+                  return <VideoCard job={job} key={job.id}/>
+                }) }
+            </section>
+
+          : <div className='flex justify-center text-[#d2222d]'>Error, message: {jobs.message}</div>
         }
-      </section>
      
     </main>
 

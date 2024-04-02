@@ -1,15 +1,38 @@
 "use server"
 
-import postgres from "postgres";
+
 import { unstable_noStore as noStore } from "next/cache";
 import {S3Client} from '@aws-sdk/client-s3';
 import { Upload } from "@aws-sdk/lib-storage";
-
+import postgresSql from "@/app/lib/db/db"
 import { Jobs, Video, Error as ErrorType, RawJobs, User} from "./definitions";
 import { milisecondsToTime } from "./actions";
 
-export const postgresSql = () => {
-    return postgres(process.env.DATABASE_URL!, {ssl: 'require', idle_timeout: 5, max_lifetime: 45})
+export async function getVideoUrlById(id: string){
+  const sql = postgresSql();
+  const url = await sql`
+    SELECT jobs.url, jobs.title, jobs.date, users.name
+    FROM jobs, users
+    WHERE jobs.userid = users.id
+  `
+
+  return url;
+}
+
+export async function findUserIdByEmail(email: string){
+  const sql = postgresSql();
+
+  try {
+    const userId = await sql`
+      SELECT id FROM users
+      WHERE email = ${email};
+    `
+
+    return userId;
+  }catch(e){
+    console.log(e);
+    throw new Error(`${e}`);
+  }
 }
 
 export async function deleteVideo(id: string){
@@ -289,9 +312,9 @@ export async function getJobsByUserId(userId: string){
 
   try{
     const rawJobs = await sql<RawJobs>`
-    SELECT * FROM jobs
-    WHERE userId = ${userId}
-    ORDER BY date DESC
+      SELECT * FROM jobs
+      WHERE userId = ${userId}
+      ORDER BY date DESC
     `
 
     const jobs = [];
@@ -313,7 +336,8 @@ export async function getJobsByUserId(userId: string){
     console.log(e);
     const error: ErrorType = {
       message: "Error at pulling jobs",
-      problemCause: "database"
+      problemCause: "database",
+      originalError: `${e}`,
     }
     return error;
   }
