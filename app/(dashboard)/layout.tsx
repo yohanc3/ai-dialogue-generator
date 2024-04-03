@@ -5,7 +5,7 @@ export default function Layout({children}: {children: React.ReactNode}){
   return (
     <div>
       <NavBar/>
-      <div className="flex w-screen h-screen flex-row pb-[300rem]">
+      <div className="flex w-screen h-auto flex-row border pb-[40rem]">
         {children}
       </div>
     </div>

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import PersonalizedAvatar from "../PersonalizedAvatar";
 import { people } from "@/app/lib/actions/characters";
-import { ReceiptRussianRuble } from "lucide-react";
+import { ReceiptRussianRuble, DeleteIcon, Trash2Icon } from "lucide-react";
 
 export default function FormDataMutation(
   {dialogueData, onSubmit, }:
@@ -109,8 +109,11 @@ export default function FormDataMutation(
   function deleteDialogue(dialogue: Dialogue){
     const newDialogues = [...dialogues];
     newDialogues.splice((dialogue.dialogueNumber-1), 1);
-    console.log("NEW DIALOGUES: ", newDialogues);
-    setDialogues(newDialogues);
+    const sortedNewDialogues = newDialogues.map((dialogue, index) => {
+      return {...dialogue, dialogueNumber: index+1}
+    })
+    console.log("NEW DIALOGUES: ", sortedNewDialogues);
+    setDialogues(sortedNewDialogues);
   }
 
   
@@ -140,10 +143,10 @@ export default function FormDataMutation(
                       <div className="p-4 flex justify-center flex-col" key={dialogue.dialogueNumber}>
                       <div className="text-sm flex ">
                         <div className="">
-                          {dialogue.dialogueNumber}.- Character: <span className="font-semibold">{dialogue.name}</span>
+                          {dialogue.dialogueNumber}.- <span className="font-semibold">{dialogue.name}</span>
                         </div>
-                        <div className="flex text-xs mb-1 ml-8 px-2 rounded-lg font-semibold text-red-600 bg-red-100">
-                          <button onClick={() => deleteDialogue(dialogue)}>Delete</button>
+                        <div className="flex items-center justify-center text-xs mb-1 ml-8 w-5 h-5 font-semibold text-white">
+                          <button onClick={() => deleteDialogue(dialogue)}><Trash2Icon width={17}/></button>
                         </div>
                       </div>
                         <div className="flex flex-row items-center gap-x-2">
@@ -208,8 +211,8 @@ export default function FormDataMutation(
                  Add dialogue 
               </Button>
               <div className="flex flex-col ">
-                { !isNewDialogueValid && (newDialogue?.length === 0) ? <span className="text-[#ffbf00]/95 text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Type a dialogue first</span> : "" }
-                { !isNewDialogueValid && (!newCharacter) ? <span className="text-[#ffbf00] text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Choose a character first</span> : "" }
+                { !isNewDialogueValid && (newDialogue?.length === 0) ? <span className="text-[#ffbf00]/95 text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Type a dialogue</span> : "" }
+                { !isNewDialogueValid && (!newCharacter) ? <span className="text-[#ffbf00] text-sm p-0 m-0 flex gap-x-2">{<ExclamationTriangleIcon width={20}/>}Choose a character</span> : "" }
               </div>
             </div>
           </Card>
