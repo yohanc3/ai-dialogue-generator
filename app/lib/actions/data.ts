@@ -59,6 +59,11 @@ export async function findUserIdByEmail(email: string){
 }
 
 export async function deleteVideo(id: string){
+  
+  if(process.env.DEVELOPMENT_STAGE){
+    console.log("development stage")
+    return;
+  }
 
   const sql = postgresSql();
 

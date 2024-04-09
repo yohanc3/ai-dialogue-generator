@@ -8,12 +8,64 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteVideo } from "@/app/lib/actions/data";
+import toast, { Toaster } from 'react-hot-toast';
+import DeleteVideoModal from "./delete-video-modal";
+import VideoLinkModal from "./video-link-modal";
 
 export default function VideoCard({job}: {job: Job}){
 
   const router = useRouter();
 
+  function deleteVideoToast(){
+    toast.promise(handleDeleteVideo(), {
+      loading: "Loading...",
+      success: "Video successfully deleted",
+      error: "Error when deleting video"
+    }, 
+    {
+      success: {
+        duration: 3000,
+      },
+      position: 'bottom-center'
+    });
+  }
+
+  function downloadVideoToast(){
+    toast("Downloading video...", {
+      duration: 600,
+      position: "bottom-center"
+    })
+    downloadVideo();
+  }
+
+  async function copyVideoLink(){
+    const link = `http://localhost:3000/shared/${job.id}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch(e){
+      throw new Error(`${e}`);
+    }
+  }
+
+  function copyLinkToast(){
+
+    toast.promise(copyVideoLink(), {
+      loading: "Loading...⏳",
+      success: "Url copied to clipboard 📋",
+      error: "Error when copying url"
+    }, 
+    {
+      success: {
+        duration: 3000,
+      },
+      position: 'bottom-center'
+    });
+  }
+
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const[isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const videoRef = useRef<any>(null);
 
   function playVideo() {
@@ -31,7 +83,9 @@ export default function VideoCard({job}: {job: Job}){
     videoRef.current.pause();
   }
 
-  function downloadVideo(url: string){
+  function downloadVideo(){
+
+    const url = job.url;
 
     try {
       fetch(url)
@@ -44,22 +98,28 @@ export default function VideoCard({job}: {job: Job}){
           a.click();
           window.URL.revokeObjectURL(url);
         })
+        .then(res => res);
     }catch(e){
       console.log("ERROR AT DOWNLOADING VIDEO", e);
     }
 
   }
 
-  function handleDeleteVideo(id: string){
+  async function handleDeleteVideo(): Promise<Error | "success"> {
+    setIsDeleteModalOpen(false);
     try {
-      deleteVideo(id)
-        .then((res) => {
-          if(res === "SUCCESS"){
-            router.refresh();
-          }
-        })
+
+      const deleteQuery = await deleteVideo(job.id)
+      if(deleteQuery !== "SUCCESS"){
+        throw new Error("Error when deleting job")
+      }
+
+      router.refresh();
+      return "success";
+
     } catch(e){
       console.log("ERROR AT DELETING JOB");
+      throw new Error(`${e}`)
     }
   
   }
@@ -68,6 +128,11 @@ export default function VideoCard({job}: {job: Job}){
   return (
 
     <Card className="w-[calc(100% / 3)]]">
+
+      <DeleteVideoModal isOpen={isDeleteModalOpen} setIsOpen={setIsDeleteModalOpen} onSubmit={deleteVideoToast}/>
+      <VideoLinkModal isOpen={isShareModalOpen} setIsOpen={setIsShareModalOpen} onSubmit={copyLinkToast}/>
+
+
       <CardHeader className="p-4">
         <CardTitle className="flex items-center justify-center text-center text-xl"> {job.title} </CardTitle>
       </CardHeader>
@@ -119,15 +184,22 @@ export default function VideoCard({job}: {job: Job}){
           </div>
         </div>
         <div className="border-l dark:border-neutral-800 w-3/12 h-full flex">
-          <div className="flex items-center justify-center w-full border-r dark:border-neutral-800 cursor-pointer" onClick={(e) => downloadVideo(job.url)}><Download size={20}/></div>
+          <div className="flex items-center justify-center w-full border-r dark:border-neutral-800 cursor-pointer active:scale-90 duration-150 " onClick={(e) => downloadVideoToast()}><Download size={20}/></div>
+
           <div className="flex flex-col items-center justify-center w-full h-full">
-            <div className="flex items-center justify-center border-b dark:border-neutral-800 w-full h-1/2 cursor-pointer" onClick={(e) => {
-              router.push(`/${job.id}`)
-            }}><Forward size={18}/></div>
-            <div className="flex items-center justify-center w-full h-1/2 cursor-pointer" onClick={(e) => handleDeleteVideo(job.id)}><TrashIcon size={16}/></div>
+
+            <div className=" active:scale-90 duration-150  flex items-center justify-center border-b dark:border-neutral-800 w-full h-1/2 cursor-pointer" onClick={(e) => setIsShareModalOpen(true)}> 
+              <Forward size={18}/>
+            </div>
+            <div className="active:scale-90 duration-150 flex items-center justify-center w-full h-1/2 cursor-pointer" 
+              onClick={(e) => setIsDeleteModalOpen(true)}>
+              <TrashIcon size={16}/>
+            </div>
           </div>
+
         </div>
       </section>
+      <Toaster/>
 
     </Card>
 

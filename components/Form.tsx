@@ -23,7 +23,7 @@ import useTypewriter from "@/app/hooks/useTypewriter";
 import FormDataEntry from "./ui/formDataEntry";
 import FormDataMutation from "./ui/formDataMutation";
 import { getUserDailyCreatedVideos } from "@/app/lib/actions/data";
-import LimitVideosModal from "./ui/dialogModal";
+import LimitVideosModal from "./ui/limit-videos-modal";
 
 const testData = JSON.parse(`{"title":"Beethoven","dialogues":[{"name":"Jonathan Blow","dialogue":"Beethoven's music speaks to the soul, resonating with deep emotions and stirring the heart profoundly.","dialogueNumber":1,"voiceId":"B1QETHXGZ79MlRg5u2bt","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/blow.mp4"},{"name":"Obama","dialogue":"Beethoven's compositions are a testament to human creativity, transcending time and touching countless souls.","dialogueNumber":2,"voiceId":"UymZwoAxnEVxnbvKNcsY","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/obama.mp4"},{"name":"Elon Musk","dialogue":"Beethoven's legacy teaches us the power of passion, perseverance, and innovation in shaping our world.","dialogueNumber":3,"voiceId":"wm8rjo1ZjMK9meTYJkAJ","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/musk.mp4"}]}`)
 
@@ -38,7 +38,7 @@ export default function Form({addPollingId, userId}: {addPollingId: addPollingId
   const MAX_DAILY_VIDEOS = 4 as const;
 
   const [localId, setLocalId] = useState(generateId());
-  const [dialogueData, setDialogueData] = useState<DialogueData | undefined>(testData);
+  const [dialogueData, setDialogueData] = useState<DialogueData | undefined>();
   const [isEntryForm, setIsEntryForm] = useState<boolean>(true);
   const [error, setError] = useState<string[]>([]);
 
@@ -49,6 +49,9 @@ export default function Form({addPollingId, userId}: {addPollingId: addPollingId
   }
 
   async function handleInitialSubmit(characters: character[], prompt: string){
+
+    setDialogueData(testData);
+    return;
 
     const dailyVideos = await getDailyVideos();
     console.log("DAILY VIDEOS: ", dailyVideos);

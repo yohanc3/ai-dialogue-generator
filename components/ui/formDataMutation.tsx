@@ -27,10 +27,14 @@ export default function FormDataMutation(
   const [dialogues, setDialogues] = useState<Dialogues>([...dialogueData.dialogues]);
   const [finalDialogueData, setFinalDialogueData] = useState<DialogueData>(dialogueData);
   const [isFinalDialogueDataEmpty, setIsFinalDialogueDataEmpty] = useState<boolean>(false);
-
+  
+  const [isDialogueLimit, setIsDialogueLimit] = useState<boolean>(false);
   const [newDialogue, setNewDialogue] = useState<string>();
   const [newCharacter, setNewCharacter] = useState<character>();
   const [isNewDialogueValid, setIsNewDialogueValid] = useState<boolean>(true);
+
+  const [isDialogueTooLong, setIsDialogueTooLong] = useState<boolean>(false);
+  const MAX_CHARACTERS = 65 as const;
 
   useEffect(() => {
     const newFinalDialogues = {title, dialogues};
@@ -43,10 +47,20 @@ export default function FormDataMutation(
   }, [newDialogue, newCharacter])
 
   function handleSubmit(){
+
+    const isDialogueInvalid = dialogues.some((dialogue) => {
+      return dialogue.dialogue.length >= MAX_CHARACTERS;
+    })
+
+    setIsDialogueTooLong(isDialogueInvalid);
+
     if(dialogues.length <= 0){
       setIsFinalDialogueDataEmpty(true);
       return;
     }
+
+    if(isDialogueInvalid) return;
+
     return;
     onSubmit(finalDialogueData);
   }
@@ -87,6 +101,9 @@ export default function FormDataMutation(
       setIsNewDialogueValid(false)
       return;
     }
+    if(dialogues.length >= 3){
+      setIsDialogueLimit(true);
+    }
 
     const person = people.find((char) => char.name === newCharacter.name);
 
@@ -107,6 +124,11 @@ export default function FormDataMutation(
   }
 
   function deleteDialogue(dialogue: Dialogue){
+
+    if(dialogues.length <= 3){
+      setIsDialogueLimit(false);
+    }
+
     const newDialogues = [...dialogues];
     newDialogues.splice((dialogue.dialogueNumber-1), 1);
     const sortedNewDialogues = newDialogues.map((dialogue, index) => {
@@ -114,6 +136,14 @@ export default function FormDataMutation(
     })
     console.log("NEW DIALOGUES: ", sortedNewDialogues);
     setDialogues(sortedNewDialogues);
+  }
+
+  function editDialogue(text: string, index: number){
+
+    const copiedDialogues = [...dialogues];
+    copiedDialogues[index].dialogue = text;
+    setDialogues(copiedDialogues);
+
   }
 
   
@@ -151,9 +181,7 @@ export default function FormDataMutation(
                       </div>
                         <div className="flex flex-row items-center gap-x-2">
                           <Textarea value={dialogue.dialogue} className="" onChange={(e) => {
-                            const copiedDialogues = [...dialogues];
-                            copiedDialogues[index].dialogue = e.target.value;
-                            setDialogues(copiedDialogues);
+                            editDialogue(e.target.value, index);
                           }}/>
                           <div className="flex flex-col h-20 justify-between py-2">
                             {
@@ -173,6 +201,7 @@ export default function FormDataMutation(
 
                           </div>
                       </div>
+                      { dialogue.dialogue.length > MAX_CHARACTERS ? <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2"> {<ExclamationTriangleIcon width={20}/>} {MAX_CHARACTERS} characters maximum per dialogue</span> : "" }
                       </div>
                     )
                   })
@@ -221,6 +250,7 @@ export default function FormDataMutation(
 
         </div>
         { isFinalDialogueDataEmpty ? <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2"> {<ExclamationTriangleIcon width={20}/>} You must have at least 1 dialogue</span> : "" }
+        { isDialogueTooLong ? <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2"> {<ExclamationTriangleIcon width={20}/>} Some dialogues exceed the {MAX_CHARACTERS} character threshold</span> : "" }
         <div className="flex w-full">
           <Button className="flex w-full" onClick={() => handleSubmit()}>
             Create
