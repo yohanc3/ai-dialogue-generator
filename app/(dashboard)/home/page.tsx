@@ -14,14 +14,15 @@ export default async function Page(){
 
   const session = await auth();
 
+  if(!session){
+    redirect("/");
+  }
+
   console.log("SESSION: ", session);
 
   let jobs: SafeJobs = {message: "No user loaded", problemCause: "auth", originalError: "page"};
 
-  if(!session?.user){
-    redirect('/');
-  }
-  else if (session.user.id){
+  if (session.user?.id){
     jobs = await getJobsByUserId(session.user.id)
   }
 

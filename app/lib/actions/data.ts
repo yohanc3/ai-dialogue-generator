@@ -8,6 +8,22 @@ import postgresSql from "@/app/lib/db/db"
 import { Jobs, Video, Error as ErrorType, RawJobs, User} from "./definitions";
 import { milisecondsToTime } from "./actions";
 
+export async function getDailyCreatedVideosCount(){
+  const sql = postgresSql();
+
+  try{
+
+    const videos = await sql`
+    SELECT * FROM jobs;
+    `
+    return videos.length;
+
+  }catch(e){
+    console.log("ERROR WHEN RETURNING VIDEOS FROM DB");
+  };
+
+}
+
 export async function getUserDailyCreatedVideos(userId: string){
   const sql = postgresSql();
 

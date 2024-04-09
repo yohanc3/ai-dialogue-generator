@@ -5,8 +5,13 @@ import VideoCard from "@/components/ui/videoCard";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import ButtonLink from "@/components/ui/buttonLink";
+import { signIn } from "@/auth";
+import { auth } from "@/auth";
+import SignInOutButton from "@/components/ui/sign-out-button";
 
 export default async function SharedVideo({params}: {params: {id: string}}){
+
+  const session = await auth();
 
   const videoData = await getVideoUrlById(params.id);
   const videoUrl = videoData[0].url;
@@ -39,7 +44,17 @@ export default async function SharedVideo({params}: {params: {id: string}}){
             Created by {videoData[0].name} on {videoDate}
           </div>
           </div>
-        <ButtonLink href="/home" className="flex items-center justify-center w-full mt-4 cursor-pointer bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 rounded-lg">Generate videos of your own for free</ButtonLink>
+          {
+            session?.user ? <ButtonLink className="flex items-center justify-center w-full mt-4 cursor-pointer bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 rounded-lg" href="/home">Generate videos</ButtonLink>
+            : 
+            <SignInOutButton signInOut={async () => {
+              "use server";
+              await signIn('google', {redirectTo: "/home"})
+            }}
+              className="flex items-center justify-center w-full mt-4 cursor-pointer bg-black text-white hover:bg-neutral-600 hover:text-white dark:bg-white dark:text-black dark:hover:opacity-80 rounded-lg py-2 text-md font-medium">
+              Get started for free
+            </SignInOutButton>
+          }
         </div>
       </div>
       

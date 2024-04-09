@@ -15,13 +15,9 @@ export default function NavLinks({session}: {session: boolean}){
       <a href="/" className={clsx("text-sm font-light dark:hover:text-white hover:text-neutral-900 duration-200", 
         {"text-white" : pathname === "/"}
       )}>Intro</a> 
-      {
-        session ?
           <a href="/usage" className={clsx("text-sm font-light dark:hover:text-white hover:text-neutral-900 duration-200", 
           {"text-white" : pathname === "/usage"}
         )}>Usage</a> 
-          : ""
-      }
       {
         session ?
           <a href="/home" className={clsx("text-sm font-light dark:hover:text-white hover:text-neutral-900 duration-200", 

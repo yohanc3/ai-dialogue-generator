@@ -35,7 +35,7 @@ export default function Form({addPollingId, userId}: {addPollingId: addPollingId
     return nanoid();
   }
 
-  const MAX_DAILY_VIDEOS = 4 as const;
+  const MAX_DAILY_VIDEOS = 2 as const;
 
   const [localId, setLocalId] = useState(generateId());
   const [dialogueData, setDialogueData] = useState<DialogueData | undefined>();
