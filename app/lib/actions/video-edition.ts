@@ -1,48 +1,43 @@
-"use server"
+"use server";
 
-import {z} from "zod";
-const Creatomate = require("creatomate")
+import { z } from "zod";
+const Creatomate = require("creatomate");
 
-export async function getVideoById(id: string){
+export async function getVideoById(id: string) {
+  const parsedData = z.object({ id: z.string() }).safeParse({
+    id,
+  });
 
-  const parsedData = z.object({id: z.string()}).safeParse({
-    id
-  })
-
-  if(!parsedData.success){
-    return "Text is not valid"
+  if (!parsedData.success) {
+    return "Text is not valid";
   }
 
   const options = {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "X-API-KEY": process.env.SYNC_LABS_API_KEY!
+      "X-API-KEY": process.env.SYNC_LABS_API_KEY!,
     },
-  }
+  };
 
   try {
-
-    const result = await fetch(`https://api.synclabs.so/video/${id}`, options)
+    const result = await fetch(`https://api.synclabs.so/video/${id}`, options);
 
     const data = await result.json();
 
     return data;
-
-  }catch(e){
+  } catch (e) {
     console.log("CUSTOM ERROR", e);
   }
-
 }
 
-export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUrl: string){
-
+export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUrl: string) {
   try {
     const response = await fetch(`https://api.synclabs.so/lipsync`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': process.env.SYNC_LABS_API_KEY!,
+        "Content-Type": "application/json",
+        "X-API-KEY": process.env.SYNC_LABS_API_KEY!,
       },
       body: JSON.stringify({
         audioUrl: audioUrl,
@@ -50,31 +45,27 @@ export async function lipSyncVideo(audioUrl: string, videoUrl: string, webhookUr
         synergize: true,
         videoUrl: videoUrl,
         webhookUrl: webhookUrl,
-      })
-    }); 
+      }),
+    });
 
     // console.log("SYNCED VIDEO RESPONSE: ", response);
 
     return await response.json();
-
-  } catch(e){
+  } catch (e) {
     console.log(e);
   }
-
 }
 
-export async function concatenateVideosByUrls(urls: (string | null)[]){
-
+export async function concatenateVideosByUrls(urls: (string | null)[]) {
   const apiKey = process.env.CREATOMATE_KEY;
 
   try {
-
     const elements = urls.map((url) => {
       return new Creatomate.Video({
         track: 1,
-        source: url
-      })
-    })
+        source: url,
+      });
+    });
 
     const client = new Creatomate.Client(apiKey);
 
@@ -82,18 +73,17 @@ export async function concatenateVideosByUrls(urls: (string | null)[]){
       outputFormat: "mp4",
       width: 1280,
       height: 720,
-      elements
-    })
-  
+      elements,
+    });
+
     //returns an array
-    const video = await client.render({source});
+    const video = await client.render({ source });
     console.log(video);
-  
+
     const videoUrl = video[0].url;
 
-    console.log("FINAL VIDEO URL: ", videoUrl)
+    console.log("FINAL VIDEO URL: ", videoUrl);
     return videoUrl;
-
   } catch (e) {
     console.log("ERROR AT CONCATENATING VIDEOS", e);
     return null;

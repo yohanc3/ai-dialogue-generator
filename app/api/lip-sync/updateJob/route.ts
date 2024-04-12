@@ -1,54 +1,48 @@
-
 //ENDPOINT: "https://{url}/lip-sync/updateJob"
 
 import { getVideosByJobId, updateJobStatus } from "@/app/lib/actions/data";
-import { concatenateVideosByUrls } from "@/app/lib/actions/videoActions";
+import { concatenateVideosByUrls } from "@/app/lib/actions/video-edition";
 
-export async function POST(req: Request){
-
+export async function POST(req: Request) {
   const res = await req.json();
-  
+
   console.log(res);
 
-  try{
+  try {
+    const jobId = res.id;
 
-      const jobId = res.id;
+    const videosData = await getVideosByJobId(jobId);
 
-      const videosData = await getVideosByJobId(jobId);
+    if (!videosData) {
+      throw new Error("Error at pulling videos by job id");
+    }
 
-      if(!videosData){
-        throw new Error("Error at pulling videos by job id")
-      }
-  
-      const videosUrls = videosData
-        .sort((a, b) => a.video_number - b.video_number)
-        .map((videoData) => {
-          return videoData.url
-        })
-      
-      const videosUrlsContainsNulls = videosUrls.every(url => typeof url === "string");
-      
-      if(videosUrlsContainsNulls){
-        return new Response(JSON.stringify("VIDEO URL CONTAINED A NULL"));
-      }
+    const videosUrls = videosData
+      .sort((a, b) => a.video_number - b.video_number)
+      .map((videoData) => {
+        return videoData.url;
+      });
 
-      const concatenatedVideoUrl = await concatenateVideosByUrls(videosUrls)
+    const videosUrlsContainsNulls = videosUrls.every((url) => typeof url === "string");
 
-      if(!concatenatedVideoUrl){
-        throw new Error("Error at concatenating videos")
-      }
-  
-      console.log("VIDEOS URLS", videosUrls);
+    if (videosUrlsContainsNulls) {
+      return new Response(JSON.stringify("VIDEO URL CONTAINED A NULL"));
+    }
 
-      const updatedJobs = await updateJobStatus(jobId, "COMPLETED", concatenatedVideoUrl)
-      console.log(updatedJobs);
-      
+    const concatenatedVideoUrl = await concatenateVideosByUrls(videosUrls);
 
-      return new Response(JSON.stringify(concatenatedVideoUrl));
+    if (!concatenatedVideoUrl) {
+      throw new Error("Error at concatenating videos");
+    }
 
-  } catch(e){
-    console.log(e)
+    console.log("VIDEOS URLS", videosUrls);
+
+    const updatedJobs = await updateJobStatus(jobId, "COMPLETED", concatenatedVideoUrl);
+    console.log(updatedJobs);
+
+    return new Response(JSON.stringify(concatenatedVideoUrl));
+  } catch (e) {
+    console.log(e);
     return new Response(JSON.stringify(e));
   }
-
-} 
+}
