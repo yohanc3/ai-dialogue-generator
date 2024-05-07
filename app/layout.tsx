@@ -26,6 +26,12 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  icons: {
+    icon: ["/favicon.ico?v=4"],
+    apple: ["/apple-touch-icon.png?v=4"],
+    shortcut: ["/apple-touch-icon.png"],
+
+  }
 }
 
 export default function RootLayout({
@@ -35,6 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <link rel="icon" href="/favicon.ico" sizes="any" />
       <body className={`${inter.className} dark:bg-black`}>
         <Providers>
           <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>

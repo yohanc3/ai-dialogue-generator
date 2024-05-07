@@ -22,7 +22,7 @@ export default function LimitVideosModal({ isOpen, setIsOpen }: { isOpen: boolea
                     Come back tomorrow!
                   </Dialog.Title>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">As we're currently in the beta phase of the app, a limit of 3 videos per day is set.</p>
+                    <p className="text-sm text-gray-500">As we are currently in the beta phase of the app, a limit of 3 videos per day is set.</p>
                   </div>
 
                   <div className="mt-4">

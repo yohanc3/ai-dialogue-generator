@@ -10,6 +10,7 @@ import { deleteVideo } from "@/app/lib/actions/data";
 import toast, { Toaster } from "react-hot-toast";
 import DeleteVideoModal from "./delete-video-modal";
 import VideoLinkModal from "./video-link-modal";
+import Image from "next/image";
 
 export default function VideoCard({ job }: { job: Job }) {
   const router = useRouter();

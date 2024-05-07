@@ -195,9 +195,9 @@ export async function updateJobStatus(jobId: string, status: string, url: string
 export async function uploadFileToS3(bucketName: string, keyName: string, Body: ReadableStream) {
   noStore();
 
-  const awsAccessKey = process.env.AWS_ACCESS_KEY;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  const awsRegion = process.env.AWS_DEFAULT_REGION;
+  const awsAccessKey = process.env.AWS_ACCESS_S3_KEY;
+  const secretAccessKey = process.env.AWS_SECRET_S3_KEY;
+  const awsRegion = process.env.AWS_S3_REGION;
 
   const client = new S3Client({
     credentials: {

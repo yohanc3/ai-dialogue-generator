@@ -26,7 +26,7 @@ export default async function JobsGrid({ jobs }: { jobs: SafeJobs }) {
           })}
         </div>
       ) : (
-        <div className="flex justify-center text-[#d2222d]">Your previous jobs couldn't be retrieved, try again later.</div>
+        <div className="flex justify-center text-[#d2222d]">Your previous jobs could not be retrieved, try again later.</div>
       )}
     </main>
   );
