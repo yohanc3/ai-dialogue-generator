@@ -11,6 +11,7 @@ import toast, { Toaster } from "react-hot-toast";
 import DeleteVideoModal from "./delete-video-modal";
 import VideoLinkModal from "./video-link-modal";
 import Image from "next/image";
+import { getUrl } from "@/app/lib/actions/actions";
 
 export default function VideoCard({ job }: { job: Job }) {
   const router = useRouter();
@@ -41,7 +42,8 @@ export default function VideoCard({ job }: { job: Job }) {
   }
 
   async function copyVideoLink() {
-    const link = `http://localhost:3000/shared/${job.id}`;
+    const url = await getUrl()
+    const link = `${url}/shared/${job.id}`;
 
     try {
       await navigator.clipboard.writeText(link);

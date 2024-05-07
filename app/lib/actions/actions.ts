@@ -218,3 +218,7 @@ export async function milisecondsToTime(timeInMiliseconds: number) {
   else if (days < 30) return `${days.toFixed(0)} days ago.`;
   else return `${months.toFixed(0)} months ago.`;
 }
+
+export async function getUrl(){
+  return process.env.URL
+}
