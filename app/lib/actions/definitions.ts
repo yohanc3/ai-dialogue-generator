@@ -1,7 +1,5 @@
 import z, { ZodType } from "zod";
 
-export const userId = "c20a1304-da40-4211-91b3-59c01b195101";
-
 export interface User {
   name: string;
   email: string;

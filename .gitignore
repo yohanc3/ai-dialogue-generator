@@ -37,3 +37,6 @@ next-env.d.ts
 
 # test webhook
 /app/api/testWebhook
+/app/lib/characters.ts
+
+/app/public/voices-icons

@@ -13,8 +13,6 @@ import useTypewriter from "@/app/hooks/useTypewriter";
 import { Character } from "@/app/lib/actions/definitions";
 import { TYPEWRITER_LETTER_INTERVAL, TYPEWRITER_PHRASE_INTERVAL, TYPEWRITER_PHRASES } from "@/app/config";
 
-const testData = JSON.parse(`{"title":"Beethoven","dialogues":[{"name":"Jonathan Blow","dialogue":"Beethoven's music speaks to the soul, resonating with deep emotions and stirring the heart profoundly.","dialogueNumber":1,"voiceId":"B1QETHXGZ79MlRg5u2bt","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/blow.mp4"},{"name":"Obama","dialogue":"Beethoven's compositions are a testament to human creativity, transcending time and touching countless souls.","dialogueNumber":2,"voiceId":"UymZwoAxnEVxnbvKNcsY","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/obama.mp4"},{"name":"Elon Musk","dialogue":"Beethoven's legacy teaches us the power of passion, perseverance, and innovation in shaping our world.","dialogueNumber":3,"voiceId":"wm8rjo1ZjMK9meTYJkAJ","templateVideoUrl":"https://texttovideofiles.s3.us-east-2.amazonaws.com/template-videos/musk.mp4"}]}`);
-
 export default function FormDataEntry({ onSubmit }: { onSubmit: (characters: Character[], prompt: string) => void }) {
   const { text } = useTypewriter(TYPEWRITER_PHRASES, TYPEWRITER_PHRASE_INTERVAL, TYPEWRITER_LETTER_INTERVAL);
 
@@ -35,6 +33,7 @@ export default function FormDataEntry({ onSubmit }: { onSubmit: (characters: Cha
   }
 
   function selectAvatar(person: Character) {
+    console.log("CHARACTERS: ", characters);
     if (characters.find((character) => character.name === person.name)) {
       setCharacters((cur) => {
         return cur.filter((character) => character.name !== person.name);
@@ -63,7 +62,7 @@ export default function FormDataEntry({ onSubmit }: { onSubmit: (characters: Cha
               <div className="flex w-full items-center justify-start gap-x-4 overflow-x-scroll scrollbar-none">
                 {people.map((person) => {
                   return (
-                    <div className="" key={person.videoUrl} onClick={() => selectAvatar}>
+                    <div className="" key={person.videoUrl} onClick={() => selectAvatar(person)}>
                       <PersonalizedAvatar isClicked={!!characters.find((char) => char.name === person.name)} person={person} className="border-2 relative z-0" />
                     </div>
                   );

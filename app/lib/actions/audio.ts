@@ -3,8 +3,6 @@
 import { storeAudioName, uploadFileToS3 } from "./data";
 import { generateId } from "../utils";
 
-import { userId } from "./definitions";
-
 export async function generateAudio(text: string, voiceId: string) {
   const apiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_22050_32`;
   const options = {
@@ -32,7 +30,7 @@ export async function generateAudio(text: string, voiceId: string) {
   }
 }
 
-export async function uploadAudioToS3(audioBody: Response) {
+export async function uploadAudioToS3(audioBody: Response, userId: string) {
   const audioStreamReadable = await audioBody.body;
 
   if (!audioStreamReadable) {
@@ -55,7 +53,6 @@ export async function uploadAudioToS3(audioBody: Response) {
   const audioUploadResult = uploadAudioToS3.$metadata.httpStatusCode;
   if (audioUploadResult !== 200) throw new Error("UPLOADING ERROR");
 
-  // if an error occurs, audio-url is saved for retries or not having to generate it again
   const queryResult = storeAudioName(audioId, userId, audioUrl);
 
   return audioUrl;

@@ -46,7 +46,9 @@ export default async function SharedVideo({ params }: { params: { id: string } }
               await signIn("google", { redirectTo: "/home" });
             }}
           >
-            <Button type="submit">{session?.user ? "Generate Videos" : "Get Started"}</Button>
+            <Button type="submit" className="w-full mt-2">
+              {session?.user ? "Generate Videos" : "Get Started"}
+            </Button>
           </form>
         </div>
       </div>

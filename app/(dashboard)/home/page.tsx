@@ -1,9 +1,7 @@
-import { milisecondsToTime } from "@/app/lib/actions/actions";
-import { getJobsByUserId, getUserDailyCreatedVideos } from "@/app/lib/actions/data";
-import { SafeJobs, userId, Error } from "@/app/lib/actions/definitions";
+import { getJobsByUserId } from "@/app/lib/actions/data";
 import DialogueForm from "@/components/DialogueForm";
 import JobsGrid from "@/components/JobsGrid";
-import { Suspense, use } from "react";
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
@@ -14,7 +12,7 @@ export default async function Page() {
     redirect("/");
   }
 
-  const jobs = await getJobsByUserId(session.user.id);
+  let jobs = await getJobsByUserId(session.user.id);
 
   return (
     <Suspense>

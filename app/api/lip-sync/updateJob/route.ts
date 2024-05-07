@@ -1,5 +1,3 @@
-//ENDPOINT: "https://{url}/lip-sync/updateJob"
-
 import { getVideosByJobId, updateJobStatus } from "@/app/lib/actions/data";
 import { concatenateVideosByUrls } from "@/app/lib/actions/video-edition";
 

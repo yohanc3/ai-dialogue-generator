@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import postgresSql from "@/app/lib/db/db";
-import { Jobs, Video, Error as ErrorType, RawJobs, User } from "./definitions";
+import { Jobs, Video, Error as ErrorType, RawJobs } from "./definitions";
 import { milisecondsToTime } from "./actions";
 
 export async function getDailyCreatedVideosCount() {
@@ -16,7 +16,7 @@ export async function getDailyCreatedVideosCount() {
     `;
     return videos.length;
   } catch (e) {
-    console.log("ERROR WHEN RETURNING VIDEOS FROM DB");
+    console.log("error when returning viedos from db");
   }
 }
 
@@ -72,7 +72,7 @@ export async function findUserIdByEmail(email: string) {
 }
 
 export async function deleteVideo(id: string) {
-  if (process.env.DEVELOPMENT_STAGE) {
+  if (process.env.DEVELOPMENT_STAGE === "true") {
     console.log("development stage");
     return;
   }
@@ -131,8 +131,8 @@ export async function storeJob(jobId: string, userId: string, title: string, sta
 
   try {
     const response = sql`
-    INSERT into jobs(id, userId, title, status, date, localdate)
-    VALUES(${jobId}, ${userId}, ${title}, ${status}, ${new Date(Date.now())}, ${new Date().toLocaleDateString()})
+    INSERT into jobs(id, userId, title, status, date)
+    VALUES(${jobId}, ${userId}, ${title}, ${status}, ${new Date(Date.now())})
     `;
     return response;
   } catch (e) {

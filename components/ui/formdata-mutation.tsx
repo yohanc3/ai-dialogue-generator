@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import PersonalizedAvatar from "./character-avatar";
 import { people } from "@/app/lib/actions/characters";
 import { Trash2Icon } from "lucide-react";
+import { MAX_DIALOGUE_LENGTH, MAX_DIALOGUES } from "@/app/config";
+import toast from "react-hot-toast";
 
 export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueData: DialogueData; onSubmit: (dialogueData: DialogueData) => void }) {
   const [title, setTitle] = useState<string>(`${dialogueData.title}`);
@@ -24,8 +26,6 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
   const [isNewDialogueValid, setIsNewDialogueValid] = useState<boolean>(true);
 
   const [isNewDialogueTooLong, setIsNewDialogueTooLong] = useState<boolean>(false);
-  const MAX_CHARACTERS = 65 as const;
-  const MAX_DIALOGUES = 4;
 
   useEffect(() => {
     const newFinalDialogues = { title, dialogues };
@@ -94,10 +94,10 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
                           )}
                         </div>
                       </div>
-                      {dialogue.dialogue.length > MAX_CHARACTERS ? (
+                      {dialogue.dialogue.length > MAX_DIALOGUE_LENGTH ? (
                         <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2">
                           {" "}
-                          {<ExclamationTriangleIcon width={20} />} {MAX_CHARACTERS} characters maximum per dialogue
+                          {<ExclamationTriangleIcon width={20} />} {MAX_DIALOGUE_LENGTH} characters maximum per dialogue
                         </span>
                       ) : (
                         ""
@@ -145,7 +145,7 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
         {isNewDialogueTooLong ? (
           <span className="text-red-500/95 text-sm p-0 m-0 flex gap-x-2">
             {" "}
-            {<ExclamationTriangleIcon width={20} />} Some dialogues exceed the {MAX_CHARACTERS} character threshold
+            {<ExclamationTriangleIcon width={20} />} Some dialogues exceed the {MAX_DIALOGUE_LENGTH} character threshold
           </span>
         ) : (
           ""
@@ -162,19 +162,26 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
 
   function handleSubmit() {
     const isDialogueInvalid = dialogues.some((dialogue) => {
-      return dialogue.dialogue.length >= MAX_CHARACTERS;
+      return dialogue.dialogue.length >= MAX_DIALOGUE_LENGTH;
     });
-
-    setIsNewDialogueTooLong(isDialogueInvalid);
 
     if (dialogues.length <= 0) {
       setIsFinalDialogueDataEmpty(true);
       return;
     }
 
-    if (isDialogueInvalid) return;
+    if (isDialogueInvalid) {
+      toast.error("Some of your dialogues are invalid.", {
+        duration: 1000,
+      });
+      return;
+    }
 
-    return;
+    console.log("It all looks good now.");
+    toast.loading("Your video is being created, it may take a couple minutes.", {
+      duration: 7000,
+      position: "bottom-center",
+    });
     onSubmit(finalDialogueData);
   }
 
@@ -232,7 +239,7 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
   }
 
   function deleteDialogue(dialogue: Dialogue) {
-    if (dialogues.length <= MAX_DIALOGUES) {
+    if (dialogues.length > MAX_DIALOGUES) {
       setAreDialoguesLimitReached(false);
     }
 

@@ -7,11 +7,11 @@ export async function POST(req: Request) {
 
     const { result } = res;
 
-    console.log("GOT RESULT IN LIP SYNC WEBHOOK", result);
+    console.log("lip sync webhook result: ", result);
 
-    const statusUpdateResult = await updateVideoStatus(result.id, result.status, result.url);
+    const statusUpdateResult = await updateVideoStatus(result.id, result.status, result.videoUrl);
 
-    console.log("VIDEO STATUS UPDATE", statusUpdateResult);
+    console.log("video status update: ", statusUpdateResult);
 
     const jobId = await getJobIdByVideoId(result.id);
 

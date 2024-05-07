@@ -15,7 +15,7 @@ export default async function Usage() {
           <div>
             <span className="bg-gradient-to-r from-[#3b628f] to-[#6fd6d4] bg-clip-text text-transparent">{20 - dailyCreatedVideos}</span> video slots left
           </div>
-          <p className="font-light text-lg">Only 20 videos can be created per day — due to the pre-launch.</p>
+          <p className="font-light text-lg">Only 20 videos can be created per day due to the pre-launch.</p>
         </h1>
       ) : (
         <div className="flex items-center justify-center flex-col gap-y-8">
