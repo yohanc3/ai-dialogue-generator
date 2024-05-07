@@ -237,7 +237,7 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
   }
 
   function deleteDialogue(dialogue: Dialogue) {
-    if (dialogues.length > MAX_DIALOGUES) {
+    if (dialogues.length === MAX_DIALOGUES) {
       setAreDialoguesLimitReached(false);
     }
 
