@@ -3,7 +3,7 @@ import clsx from "clsx";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 
 export default function UserAvatar({ session }: { session: Session }) {
@@ -47,7 +47,7 @@ export default function UserAvatar({ session }: { session: Session }) {
             )}
           </section>
           <section className="w-full flex items-center space-x-2 px-2 py-2 pb-4 ">
-            <div className="flex items-center text-black font-light text-sm cursor-pointer gap-x-2">
+            <div className="flex items-center text-black font-light text-sm cursor-pointer gap-x-2" onClick={() => signOut()}>
               <ArrowRightStartOnRectangleIcon height={20} color="black" strokeWidth={1} />
               <p>Logout</p>
             </div>
