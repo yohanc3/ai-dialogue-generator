@@ -3,11 +3,15 @@ import HomeImage from "@/components/HomeImage";
 import { auth, signIn } from "../auth";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Intro | Motion",
+  description: "Intro to Motion"
+}
 
 export default async function Home() {
   const session = await auth();
-
-  console.log("SESSION RECEIVED AT HOME ORIGIN: ", session);
 
   return (
     <div className="w-full">

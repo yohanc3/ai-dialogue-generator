@@ -37,7 +37,6 @@ export default function Form({ addPollingId, userId }: { addPollingId: (id: stri
     // setDialogueData(testData);
 
     const dailyCreatedVideos = await getDailyCreatedVideos();
-    console.log("DAILY VIDEOS: ", dailyCreatedVideos);
     if (dailyCreatedVideos >= MAX_DAILY_VIDEOS) {
       setIsMaxVideosAlertOpen(true);
       return;
@@ -58,12 +57,10 @@ export default function Form({ addPollingId, userId }: { addPollingId: (id: stri
       return;
     }
 
-    console.log("AI GENERATED DIALOGUE: ", dialogueData);
     setDialogueData(dialogueData);
   }
 
   function triggerVideoDialogueGeneration(editedDialogueData: DialogueData) {
-    console.log("FINAL DIALOGUE DATA: ", editedDialogueData);
     createFullVideo(localId, userId!, editedDialogueData);
     addPollingId(localId);
     setLocalId(generateId());

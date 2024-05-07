@@ -1,7 +1,13 @@
 import { getDailyCreatedVideosCount } from "@/app/lib/actions/data";
 import { auth, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Usage",
+  description: "App usage"
+}
 
 export default async function Usage() {
   const session = await auth();

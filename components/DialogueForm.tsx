@@ -27,7 +27,6 @@ export default function DialogueForm({ jobs, userId }: { jobs: SafeJobs; userId:
 
     if (pollingIds.length) {
       interval = setInterval(() => {
-        console.log("ROUTER REFRESHED");
         router.refresh();
       }, POLL_INTERVAL);
     }

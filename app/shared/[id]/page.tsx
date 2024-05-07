@@ -17,8 +17,6 @@ export default async function SharedVideo({ params }: { params: { id: string } }
     day: "numeric",
   });
 
-  console.log(videoData[0]);
-
   return (
     <main className="flex w-screen h-screen flex-col">
       <div className="flex flex-col justify-center items-center w-full h-full">

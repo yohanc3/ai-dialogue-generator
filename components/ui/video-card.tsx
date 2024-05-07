@@ -102,7 +102,6 @@ export default function VideoCard({ job }: { job: Job }) {
         })
         .then((res) => res);
     } catch (e) {
-      console.log("ERROR AT DOWNLOADING VIDEO", e);
     }
   }
 
@@ -117,7 +116,6 @@ export default function VideoCard({ job }: { job: Job }) {
       router.refresh();
       return "success";
     } catch (e) {
-      console.log("Something went wrong...Couldn't delete video");
       throw new Error(`${e}`);
     }
   }

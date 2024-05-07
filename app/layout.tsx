@@ -1,9 +1,7 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { cn } from "@/app/lib/utils";
 import "./globals.css";
-import NavBar from "@/components/NavBar";
 import { Providers } from "./providers";
 
 const inter = Inter({
@@ -12,6 +10,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  title: {
+    default: "Motion",
+    template: '%s | Motion',
+  },
   generator: 'Next.js',
   applicationName: 'motion',
   referrer: 'origin-when-cross-origin',

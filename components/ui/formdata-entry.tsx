@@ -33,17 +33,12 @@ export default function FormDataEntry({ onSubmit }: { onSubmit: (characters: Cha
   }
 
   function selectAvatar(person: Character) {
-    console.log("CHARACTERS: ", characters);
     if (characters.find((character) => character.name === person.name)) {
       setCharacters((cur) => {
         return cur.filter((character) => character.name !== person.name);
       });
     } else if (characters.length < 3) {
       setCharacters((cur) => [...cur, person]);
-      console.log("CHARACTERS NAMES: ", [...characters, person]);
-    } else {
-      //handle error here properly later on added
-      console.log("3 CHARACTERS HAVE ALRAEDY BEEN SELEECTED: ", characters);
     }
   }
 

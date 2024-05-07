@@ -30,7 +30,6 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
   useEffect(() => {
     const newFinalDialogues = { title, dialogues };
     setFinalDialogueData(newFinalDialogues);
-    console.log("FINAL DIALOGUE DATA CHANGED: ", newFinalDialogues);
   }, [title, dialogues]);
 
   useEffect(() => {
@@ -177,7 +176,6 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
       return;
     }
 
-    console.log("It all looks good now.");
     toast.loading("Your video is being created, it may take a couple minutes.", {
       duration: 7000,
       position: "bottom-center",
@@ -248,7 +246,6 @@ export default function FormDataMutation({ dialogueData, onSubmit }: { dialogueD
     const sortedNewDialogues = newDialogues.map((dialogue, index) => {
       return { ...dialogue, dialogueNumber: index + 1 };
     });
-    console.log("NEW DIALOGUES: ", sortedNewDialogues);
     setDialogues(sortedNewDialogues);
   }
 

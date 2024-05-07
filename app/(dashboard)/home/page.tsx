@@ -4,6 +4,12 @@ import JobsGrid from "@/components/JobsGrid";
 import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Home"
+}
 
 export default async function Page() {
   const session = await auth();

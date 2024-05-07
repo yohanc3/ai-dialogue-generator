@@ -18,7 +18,6 @@ export default function UserAvatar({ session }: { session: Session }) {
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       if (divRef.current && !divRef.current.contains(event.target as Node) && imageRef.current && !imageRef.current.contains(event.target as Node)) {
-        console.log("clicked");
         setIsTabOpen(false);
       }
     };
