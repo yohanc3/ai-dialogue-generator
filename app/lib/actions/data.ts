@@ -316,7 +316,7 @@ export async function getJobsByUserId(userId: string) {
     const jobs = [];
 
     for (const job of rawJobs) {
-      const transcurredTime = await milisecondsToTime(Date.now() - new Date(job.date.getTime() - (1000 * 60 * 60 * 10)).getTime());
+      const transcurredTime = await milisecondsToTime(Date.now() - new Date(job.date.getTime()).getTime());
 
       jobs.push({
         ...job,
