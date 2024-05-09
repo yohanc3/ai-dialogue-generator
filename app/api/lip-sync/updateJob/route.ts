@@ -1,4 +1,4 @@
-import { getVideosByJobId, updateJobStatus } from "@/app/lib/actions/data";
+import { getVideosByJobId, updateJobLog, updateJobStatus } from "@/app/lib/actions/data";
 import { concatenateVideosByUrls } from "@/app/lib/actions/video-edition";
 
 export async function POST(req: Request) {
@@ -36,6 +36,8 @@ export async function POST(req: Request) {
     console.log("VIDEOS URLS", videosUrls);
 
     const updatedJobs = await updateJobStatus(jobId, "COMPLETED", concatenatedVideoUrl);
+    const updatedJobLog = await updateJobLog(jobId, "COMPLETED")
+    
     console.log(updatedJobs);
 
     return new Response(JSON.stringify(concatenatedVideoUrl));

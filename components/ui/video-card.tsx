@@ -2,7 +2,15 @@
 
 import { Job } from "@/app/lib/actions/definitions";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
-import { Download, Forward, Dot, Ellipsis, X, Play, TrashIcon } from "lucide-react";
+import {
+  Download,
+  Forward,
+  Dot,
+  Ellipsis,
+  X,
+  Play,
+  TrashIcon,
+} from "lucide-react";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -35,14 +43,14 @@ export default function VideoCard({ job }: { job: Job }) {
 
   function downloadVideoToast() {
     toast("Downloading video...", {
-      duration: 600,
+      duration: 3000,
       position: "bottom-center",
     });
     downloadVideo();
   }
 
   async function copyVideoLink() {
-    const url = await getUrl()
+    const url = await getUrl();
     const link = `${url}/shared/${job.id}`;
 
     try {
@@ -104,8 +112,7 @@ export default function VideoCard({ job }: { job: Job }) {
           window.URL.revokeObjectURL(url);
         })
         .then((res) => res);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   async function handleDeleteVideo(): Promise<Error | "success"> {
@@ -125,21 +132,55 @@ export default function VideoCard({ job }: { job: Job }) {
 
   return (
     <Card className="w-[calc(100% / 3)]]">
-      <DeleteVideoModal isOpen={isDeleteModalOpen} setIsOpen={setIsDeleteModalOpen} onSubmit={deleteVideoToast} />
-      <VideoLinkModal isOpen={isShareModalOpen} setIsOpen={setIsShareModalOpen} onSubmit={copyLinkToast} />
+      <DeleteVideoModal
+        isOpen={isDeleteModalOpen}
+        setIsOpen={setIsDeleteModalOpen}
+        onSubmit={deleteVideoToast}
+      />
+      <VideoLinkModal
+        isOpen={isShareModalOpen}
+        setIsOpen={setIsShareModalOpen}
+        onSubmit={copyLinkToast}
+      />
 
       <CardHeader className="p-4">
-        <CardTitle className="flex items-center justify-center text-center text-xl"> {job.title} </CardTitle>
+        <CardTitle className="flex items-center justify-center text-center text-xl">
+          {" "}
+          {job.title}{" "}
+        </CardTitle>
       </CardHeader>
 
       <section className="border-y dark:border-neutral-800 object-contain p-0 w-full relative cursor-pointer">
-        <div className="w-full h-full flex items-center justify-center absolute z-0">{job.status === "COMPLETED" ? <Play color="#FFFFFF" className="z-10" fill="#FFFFFF" stroke="#FFFFFF" /> : job.status === "PENDING" ? <Ellipsis color="#ffbf00" className="z-10" /> : <X color="#d2222d" className="z-10" />}</div>
+        <div className="w-full h-full flex items-center justify-center absolute z-0">
+          {job.status === "COMPLETED" ? (
+            <Play
+              color="#FFFFFF"
+              className="z-10"
+              fill="#FFFFFF"
+              stroke="#FFFFFF"
+            />
+          ) : job.status === "PENDING" ? (
+            <Ellipsis color="#ffbf00" className="z-10" />
+          ) : (
+            <X color="#d2222d" className="z-10" />
+          )}
+        </div>
         {job.status === "COMPLETED" ? (
-          <video loop className="object-contain opacity-70 dark:opacity-35 dark:hover:opacity-90 z-1 hover:opacity-90 duration-200 w-full" ref={videoRef} onMouseOver={() => playVideo()} onMouseLeave={() => pauseVideo()}>
+          <video
+            loop
+            className="object-contain opacity-70 dark:opacity-35 dark:hover:opacity-90 z-1 hover:opacity-90 duration-200 w-full"
+            ref={videoRef}
+            onMouseOver={() => playVideo()}
+            onMouseLeave={() => pauseVideo()}
+          >
             <source src={job.url} />
           </video>
         ) : (
-          <img src="/design.png" alt={job.status === "PENDING" ? "pending..." : "job failed"} className="w-full "></img>
+          <img
+            src="/design.png"
+            alt={job.status === "PENDING" ? "pending..." : "job failed"}
+            className="w-full "
+          ></img>
         )}
       </section>
 
@@ -154,19 +195,32 @@ export default function VideoCard({ job }: { job: Job }) {
                 "bg-[#d2222d]": job.status === "FAILED",
               })}
             ></div>
-            {job.status === "COMPLETED" ? "Completed" : job.status === "PENDING" ? "Pending" : "Failed"}
+            {job.status === "COMPLETED"
+              ? "Completed"
+              : job.status === "PENDING"
+              ? "Pending"
+              : "Failed"}
           </div>
         </div>
         <div className="border-l dark:border-neutral-800 w-3/12 h-full flex">
-          <div className="flex items-center justify-center w-full border-r dark:border-neutral-800 cursor-pointer active:scale-90 duration-150 " onClick={(e) => downloadVideoToast()}>
+          <div
+            className="flex items-center justify-center w-full border-r dark:border-neutral-800 cursor-pointer active:scale-90 duration-150 "
+            onClick={(e) => downloadVideoToast()}
+          >
             <Download size={20} />
           </div>
 
           <div className="flex flex-col items-center justify-center w-full h-full">
-            <div className=" active:scale-90 duration-150  flex items-center justify-center border-b dark:border-neutral-800 w-full h-1/2 cursor-pointer" onClick={(e) => setIsShareModalOpen(true)}>
+            <div
+              className=" active:scale-90 duration-150  flex items-center justify-center border-b dark:border-neutral-800 w-full h-1/2 cursor-pointer"
+              onClick={(e) => setIsShareModalOpen(true)}
+            >
               <Forward size={18} />
             </div>
-            <div className="active:scale-90 duration-150 flex items-center justify-center w-full h-1/2 cursor-pointer" onClick={(e) => setIsDeleteModalOpen(true)}>
+            <div
+              className="active:scale-90 duration-150 flex items-center justify-center w-full h-1/2 cursor-pointer"
+              onClick={(e) => setIsDeleteModalOpen(true)}
+            >
               <TrashIcon size={16} />
             </div>
           </div>

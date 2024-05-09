@@ -5,8 +5,15 @@ import { signIn } from "@/auth";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { unstable_noStore as no_store } from "next/cache";
 
-export default async function SharedVideo({ params }: { params: { id: string } }) {
+export default async function SharedVideo({
+  params,
+}: {
+  params: { id: string };
+}) {
+  no_store();
+
   const session = await auth();
 
   const videoData = await getVideoUrlById(params.id);
@@ -25,7 +32,9 @@ export default async function SharedVideo({ params }: { params: { id: string } }
         </div>
         <div className="w-1/2">
           <div className="w-full flex flex-col justify-center items-center border border-neutral-700 rounded-lg">
-            <div className="w-full flex items-center justify-center border-b border-neutral-700 text-xl py-4">{videoData[0].title}</div>
+            <div className="w-full flex items-center justify-center border-b border-neutral-700 text-xl py-4">
+              {videoData[0].title}
+            </div>
             <>
               <video controls loop className="">
                 <source src={videoUrl} />

@@ -1,4 +1,4 @@
-import { getJobsByUserId } from "@/app/lib/actions/data";
+import { findUserIdByJobId, getJobsByUserId } from "@/app/lib/actions/data";
 import DialogueForm from "@/components/DialogueForm";
 import JobsGrid from "@/components/JobsGrid";
 import { Suspense } from "react";

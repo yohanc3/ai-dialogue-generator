@@ -4,7 +4,7 @@ import { customAlphabet } from "nanoid";
 import { concatenateVideosByUrls, lipSyncVideo } from "./video-edition";
 import { generateAudio, uploadAudioToS3 } from "./audio";
 import OpenAI from "openai";
-import { getVideosByJobId, storeJob, storeVideoName, updateJobStatus } from "./data";
+import { createJobLog, getVideosByJobId, storeJob, storeVideoName, updateJobStatus } from "./data";
 import { Character, PromptFormat, RawDialogueResponse, DialogueData } from "./definitions";
 import { people } from "./characters";
 import { AuthError } from "next-auth";
@@ -51,6 +51,7 @@ export async function createFullVideo(jobId: string, userId: string, dialogueDat
     console.log("DIALOGUES", dialogues);
 
     const savedJob = await storeJob(jobId, userId, dialogueData.title, "PENDING");
+    const jobLog = await createJobLog(userId, "PENDING")
 
     const areDialoguesValid = dialogues.every((dialogue) => {
       return dialogue.voiceId && dialogue.templateVideoUrl;
@@ -196,8 +197,11 @@ export async function onVideoCompletion(jobId: string) {
       throw new Error("Error at concatenating videos");
     }
 
-    const updatedJobs = await updateJobStatus(jobId, "COMPLETED", concatenatedVideoUrl);
-    console.log("SUCCESS", updatedJobs);
+    const status = 'COMPLETED'
+
+    createJobLog(jobId, status)
+    updateJobStatus(jobId, status, concatenatedVideoUrl);
+    
   } catch (e) {
     console.log(e);
     return e;

@@ -11,37 +11,56 @@ export async function getDailyCreatedVideosCount() {
   const sql = postgresSql();
 
   try {
-    const videos = await sql`
-    SELECT * FROM jobs;
+    const videosDates = await sql`
+    SELECT date FROM jobs_log;
     `;
-    return videos.length;
+
+    const todayToDateString = new Date().toLocaleDateString();
+
+    const todayCreatedVideos = videosDates
+      .map((video) => {
+        const transformedDate = new Date(video.date).toLocaleDateString();
+        return transformedDate;
+      })
+      .reduce((prev, dateToDateString) => {
+        if (dateToDateString === todayToDateString) {
+          return prev + 1;
+        }
+        return prev;
+      }, 0);
+
+    return todayCreatedVideos;
   } catch (e) {
-    console.log("error when returning viedos from db");
+    console.log("error when pulling daily created videos from db");
   }
 }
 
 export async function getUserDailyCreatedVideos(userId: string) {
   const sql = postgresSql();
 
-  const videosDates = await sql`
-    SELECT date FROM jobs
+  try {
+    const videosDates = await sql`
+    SELECT date FROM jobs_log
     WHERE userid = ${userId};
   `;
-  const todayToDateString = new Date().toLocaleDateString();
+    const todayToDateString = new Date().toLocaleDateString();
 
-  const todayCreatedVideos = videosDates
-    .map((video) => {
-      const transformedDate = new Date(video.date).toLocaleDateString();
-      return transformedDate;
-    })
-    .reduce((prev, dateToDateString) => {
-      if (dateToDateString === todayToDateString) {
-        return prev + 1;
-      }
-      return prev;
-    }, 0);
+    const todayCreatedVideos = videosDates
+      .map((video) => {
+        const transformedDate = new Date(video.date).toLocaleDateString();
+        return transformedDate;
+      })
+      .reduce((prev, dateToDateString) => {
+        if (dateToDateString === todayToDateString) {
+          return prev + 1;
+        }
+        return prev;
+      }, 0);
 
-  return todayCreatedVideos;
+    return todayCreatedVideos;
+  } catch (e) {
+    console.log("error when pulling user daily created videos from db");
+  }
 }
 
 export async function getVideoUrlById(id: string) {
@@ -49,7 +68,7 @@ export async function getVideoUrlById(id: string) {
   const url = await sql`
     SELECT jobs.url, jobs.title, jobs.date, users.name
     FROM jobs, users
-    WHERE jobs.userid = users.id
+    WHERE jobs.id = ${id}
   `;
 
   return url;
@@ -126,7 +145,12 @@ export async function fetchJobsByStatus(userId: string, status: string) {
   }
 }
 
-export async function storeJob(jobId: string, userId: string, title: string, status: string) {
+export async function storeJob(
+  jobId: string,
+  userId: string,
+  title: string,
+  status: string
+) {
   const sql = postgresSql();
 
   try {
@@ -154,7 +178,11 @@ export async function storeAudioName(id: string, userId: string, url: string) {
   }
 }
 
-export async function updateVideoStatus(videoId: string, status: string, url: string) {
+export async function updateVideoStatus(
+  videoId: string,
+  status: string,
+  url: string
+) {
   console.log("\njobId: ", videoId);
   console.log("status: ", status);
   console.log("url: ", url, "\n");
@@ -176,7 +204,11 @@ export async function updateVideoStatus(videoId: string, status: string, url: st
   }
 }
 
-export async function updateJobStatus(jobId: string, status: string, url: string) {
+export async function updateJobStatus(
+  jobId: string,
+  status: string,
+  url: string
+) {
   const sql = postgresSql();
 
   try {
@@ -185,14 +217,69 @@ export async function updateJobStatus(jobId: string, status: string, url: string
       UPDATE jobs 
       SET status = ${status}, url = ${url}
       WHERE id = ${jobId}
-
     `;
 
     return queryResult;
   } catch (e) {}
 }
 
-export async function uploadFileToS3(bucketName: string, keyName: string, Body: ReadableStream) {
+export async function findUserIdByJobId(jobId: string) {
+  const sql = postgresSql();
+
+  try {
+    const queryResult = await sql`
+    SELECT userId FROM jobs
+    WHERE id = ${jobId}
+    `;
+
+    const userId = queryResult[0]["userid"];
+
+    return userId;
+  } catch (e) {
+    console.log("error when retrieving userid by jobid", e);
+  }
+}
+
+export async function createJobLog(jobId: string, status: string) {
+  const sql = postgresSql();
+
+  const date = new Date().toLocaleDateString();
+
+  const userId = await findUserIdByJobId(jobId);
+
+  if (!userId) {
+    console.log(
+      "unable to create job log, no userid found given jobId: ",
+      jobId
+    );
+    return;
+  }
+
+  const queryResult = await sql`
+    INSERT into jobs_log (userId, jobId, status, date) 
+    VALUES (${userId}, ${jobId}, ${status}, ${date})
+  `;
+
+  return queryResult;
+}
+
+export async function updateJobLog(jobId: string, status: string) {
+  const sql = postgresSql();
+
+  const queryResult = await sql`
+    UPDATE jobs_log
+    SET status = ${status}
+    WHERE jobId = ${jobId}
+  `;
+
+  return queryResult;
+}
+
+export async function uploadFileToS3(
+  bucketName: string,
+  keyName: string,
+  Body: ReadableStream
+) {
   noStore();
 
   const awsAccessKey = process.env.AWS_ACCESS_S3_KEY;
@@ -316,7 +403,9 @@ export async function getJobsByUserId(userId: string) {
     const jobs = [];
 
     for (const job of rawJobs) {
-      const transcurredTime = await milisecondsToTime(Date.now() - new Date(job.date.getTime()).getTime());
+      const transcurredTime = await milisecondsToTime(
+        Date.now() - new Date(job.date.getTime()).getTime()
+      );
 
       jobs.push({
         ...job,
@@ -336,7 +425,13 @@ export async function getJobsByUserId(userId: string) {
   }
 }
 
-export async function storeVideoName(id: string, jobId: string, userId: string, status: string, videoNumber: number) {
+export async function storeVideoName(
+  id: string,
+  jobId: string,
+  userId: string,
+  status: string,
+  videoNumber: number
+) {
   try {
     const sql = postgresSql();
 
