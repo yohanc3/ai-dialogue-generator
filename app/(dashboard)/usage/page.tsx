@@ -12,8 +12,7 @@ export const metadata: Metadata = {
 export default async function Usage() {
   const session = await auth();
 
-  // const dailyCreatedVideos = await getDailyCreatedVideosCount();
-  const dailyCreatedVideos = 20;
+  const dailyCreatedVideos = await getDailyCreatedVideosCount();
 
   return (
     <main className="flex flex-col gap-y-8 w-screen h-screen -mt-[5rem] items-center justify-center">
